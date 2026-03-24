@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 
-# ── Requests ──────────────────────────────────────────────────
+# -- Requests --------------------------------------------------
 
 class SignupRequest(BaseModel):
     email:      EmailStr
@@ -45,7 +45,7 @@ class LogoutRequest(BaseModel):
     refresh_token: str
 
 
-# ── Responses ─────────────────────────────────────────────────
+# -- Responses -------------------------------------------------
 
 class MessageResponse(BaseModel):
     message: str

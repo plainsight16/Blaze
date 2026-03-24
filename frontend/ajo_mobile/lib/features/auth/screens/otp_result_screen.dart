@@ -20,7 +20,7 @@ class OtpResultScreen extends StatelessWidget {
       success ? const _SuccessScreen() : const _FailureScreen();
 }
 
-// ─── Success ──────────────────────────────────────────────────────────────────
+// --- Success ------------------------------------------------------------------
 
 class _SuccessScreen extends StatelessWidget {
   const _SuccessScreen();
@@ -158,7 +158,7 @@ class _SuccessScreen extends StatelessWidget {
   }
 }
 
-// ─── Failure ──────────────────────────────────────────────────────────────────
+// --- Failure ------------------------------------------------------------------
 
 class _FailureScreen extends StatelessWidget {
   const _FailureScreen();

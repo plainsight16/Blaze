@@ -175,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// ─── Logo badge ───────────────────────────────────────────────────────────────
+// --- Logo badge ---------------------------------------------------------------
 
 class _LogoBadge extends StatelessWidget {
   @override
@@ -238,7 +238,7 @@ class _LogoBadge extends StatelessWidget {
   }
 }
 
-// ─── Loading dots ─────────────────────────────────────────────────────────────
+// --- Loading dots -------------------------------------------------------------
 
 class _LoadingDots extends StatefulWidget {
   @override

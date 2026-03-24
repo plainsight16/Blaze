@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 ///  • **Manrope** – Display & Headlines ("Executive" layer)
 ///  • **Inter**   – Body, Labels & Data ("Assistant" layer)
 abstract class AppTypography {
-  // ─── Display / Headlines – Manrope ───────────────────────────────────────
+  // --- Display / Headlines – Manrope ---------------------------------------
 
   /// Hero balance, e.g. "₦ 1,250,000"
   static TextStyle displayLg(Color color) => GoogleFonts.manrope(
@@ -82,7 +82,7 @@ abstract class AppTypography {
         color: color,
       );
 
-  // ─── Body & Labels – Inter ────────────────────────────────────────────────
+  // --- Body & Labels – Inter ------------------------------------------------
 
   static TextStyle bodyLg(Color color) => GoogleFonts.inter(
         fontSize: 16,
@@ -133,7 +133,7 @@ abstract class AppTypography {
         color: color,
       );
 
-  // ─── TextTheme builder ────────────────────────────────────────────────────
+  // --- TextTheme builder ----------------------------------------------------
 
   /// Builds a [TextTheme] wired to [onSurface] and [onSurfaceVariant].
   static TextTheme buildTextTheme({

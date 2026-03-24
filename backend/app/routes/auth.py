@@ -33,7 +33,7 @@ from app.utils.security import create_access_token, hash_password, verify_passwo
 router = APIRouter()
 
 
-# ── Signup ────────────────────────────────────────────────────
+# -- Signup ----------------------------------------------------
 
 @router.post("/signup", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def signup(
@@ -67,7 +67,7 @@ def signup(
     return MessageResponse(message="Account created. Check your email for a verification code.")
 
 
-# ── Verify email ──────────────────────────────────────────────
+# -- Verify email ----------------------------------------------
 
 @router.post("/verify-otp", response_model=MessageResponse)
 def verify_otp(
@@ -88,7 +88,7 @@ def verify_otp(
     return MessageResponse(message="Account verified.")
 
 
-# ── Resend OTP ────────────────────────────────────────────────
+# -- Resend OTP ------------------------------------------------
 
 @router.post("/resend-otp", response_model=MessageResponse)
 def resend_otp(
@@ -113,7 +113,7 @@ def resend_otp(
     return MessageResponse(message="Code sent.")
 
 
-# ── Login ─────────────────────────────────────────────────────
+# -- Login -----------------------------------------------------
 
 @router.post("/login", response_model=TokenResponse)
 def login(
@@ -133,7 +133,7 @@ def login(
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-# ── Refresh ───────────────────────────────────────────────────
+# -- Refresh ---------------------------------------------------
 
 @router.post("/refresh", response_model=AccessTokenResponse)
 def refresh(
@@ -145,7 +145,7 @@ def refresh(
     return AccessTokenResponse(access_token=access)
 
 
-# ── Logout ────────────────────────────────────────────────────
+# -- Logout ----------------------------------------------------
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(
@@ -165,7 +165,7 @@ def logout_all(
     return MessageResponse(message="Logged out of all devices.")
 
 
-# ── Password reset ────────────────────────────────────────────
+# -- Password reset --------------------------------------------
 
 @router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(
@@ -203,7 +203,7 @@ def reset_password(
     return MessageResponse(message="Password updated. Please log in again.")
 
 
-# ── Helpers ───────────────────────────────────────────────────
+# -- Helpers ---------------------------------------------------
 
 def _get_user_by_email(email: str, db: Session) -> User:
     user = db.query(User).filter(User.email == email).first()

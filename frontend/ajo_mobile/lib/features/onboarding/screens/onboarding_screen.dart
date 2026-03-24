@@ -77,7 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top bar: theme toggle + skip ──────────────────────────────
+            // -- Top bar: theme toggle + skip ------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -96,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // ── Illustration pager ────────────────────────────────────────
+            // -- Illustration pager ----------------------------------------
             SizedBox(
               height: size.height * 0.50,
               child: PageView.builder(
@@ -108,11 +108,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // ── Page dots ─────────────────────────────────────────────────
+            // -- Page dots -------------------------------------------------
             const SizedBox(height: 24),
             _PageDots(count: _slides.length, current: _page),
 
-            // ── Text content (animated on page change) ────────────────────
+            // -- Text content (animated on page change) --------------------
             const SizedBox(height: 28),
             Expanded(
               child: Padding(
@@ -139,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // ── CTA ───────────────────────────────────────────────────────
+            // -- CTA -------------------------------------------------------
             Padding(
               padding: EdgeInsets.fromLTRB(
                 28,
@@ -162,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// ─── Slide data model ─────────────────────────────────────────────────────────
+// --- Slide data model ---------------------------------------------------------
 
 enum _Illustration { community, goals, payout }
 
@@ -179,7 +179,7 @@ class _SlideData {
   final String body;
 }
 
-// ─── Illustration panel ───────────────────────────────────────────────────────
+// --- Illustration panel -------------------------------------------------------
 
 class _IllustrationPanel extends StatelessWidget {
   const _IllustrationPanel({required this.slide});
@@ -198,7 +198,7 @@ class _IllustrationPanel extends StatelessWidget {
   }
 }
 
-// ── Illustration 1: Community ─────────────────────────────────────────────────
+// -- Illustration 1: Community -------------------------------------------------
 
 class _CommunityIllustration extends StatelessWidget {
   const _CommunityIllustration();
@@ -371,7 +371,7 @@ class _AvatarCard extends StatelessWidget {
   }
 }
 
-// ── Illustration 2: Goals ─────────────────────────────────────────────────────
+// -- Illustration 2: Goals -----------------------------------------------------
 
 class _GoalsIllustration extends StatelessWidget {
   const _GoalsIllustration();
@@ -514,7 +514,7 @@ class _MiniGoalCard extends StatelessWidget {
   }
 }
 
-// ── Illustration 3: Payout ────────────────────────────────────────────────────
+// -- Illustration 3: Payout ----------------------------------------------------
 
 class _PayoutIllustration extends StatelessWidget {
   const _PayoutIllustration();
@@ -715,7 +715,7 @@ class _PayCard extends StatelessWidget {
   }
 }
 
-// ─── Page dots ────────────────────────────────────────────────────────────────
+// --- Page dots ----------------------------------------------------------------
 
 class _PageDots extends StatelessWidget {
   const _PageDots({required this.count, required this.current});
@@ -747,7 +747,7 @@ class _PageDots extends StatelessWidget {
   }
 }
 
-// ─── Slide text block ─────────────────────────────────────────────────────────
+// --- Slide text block ---------------------------------------------------------
 
 class _SlideText extends StatelessWidget {
   const _SlideText({super.key, required this.slide});
@@ -784,7 +784,7 @@ class _SlideText extends StatelessWidget {
   }
 }
 
-// ─── Theme toggle button ──────────────────────────────────────────────────────
+// --- Theme toggle button ------------------------------------------------------
 
 class _ThemeToggleButton extends StatelessWidget {
   @override

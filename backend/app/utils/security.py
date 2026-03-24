@@ -12,7 +12,7 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
 
-# ── Passwords ─────────────────────────────────────────────────
+# -- Passwords -------------------------------------------------
 
 def hash_password(password: str) -> str:
     return _pwd_context.hash(password)
@@ -22,7 +22,7 @@ def verify_password(plain: str, hashed: str) -> bool:
     return _pwd_context.verify(plain, hashed)
 
 
-# ── OTP tokens ────────────────────────────────────────────────
+# -- OTP tokens ------------------------------------------------
 
 def generate_otp() -> tuple[str, str]:
     """Return (raw_6char_code, sha256_hex_digest). Store digest; send raw."""
@@ -39,7 +39,7 @@ def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
 
 
-# ── JWT access tokens ─────────────────────────────────────────
+# -- JWT access tokens -----------------------------------------
 
 def create_access_token(user_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -55,7 +55,7 @@ def decode_access_token(token: str) -> str:
     return user_id
 
 
-# ── Refresh tokens ────────────────────────────────────────────
+# -- Refresh tokens --------------------------------------------
 
 def generate_refresh_token() -> tuple[str, str]:
     """Return (raw_token, sha256_hex_digest). Store digest; send raw."""
