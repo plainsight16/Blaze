@@ -3,6 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../messages/screens/messages_screen.dart';
+import '../../pools/screens/create_group_screen.dart';
+import '../../pools/screens/explore_groups_screen.dart';
+import '../../profile/screens/kyc_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,7 +18,9 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: cs.surfaceContainer,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreateGroupScreen()),
+        ),
         backgroundColor: cs.primary,
         foregroundColor: cs.onPrimary,
         elevation: 4,
@@ -31,6 +37,8 @@ class HomeScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _BalanceCard(),
+                const SizedBox(height: 20),
+                _ProfileCompletionCard(),
                 const SizedBox(height: 28),
                 _SectionHeader(title: 'Quick Actions'),
                 const SizedBox(height: 12),
@@ -39,7 +47,10 @@ class HomeScreen extends StatelessWidget {
                 _SectionHeader(
                   title: 'Active Pools',
                   action: TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const ExploreGroupsScreen()),
+                    ),
                     child: Text(
                       'See All',
                       style: AppTypography.labelMd(cs.primary),
@@ -153,8 +164,13 @@ class _GlassAppBar extends StatelessWidget {
                     );
                   },
                 ),
-                // Notification button
-                Stack(
+                // Messages / chat button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const MessagesScreen()),
+                  ),
+                  child: Stack(
                   children: [
                     Container(
                       width: 42,
@@ -186,6 +202,7 @@ class _GlassAppBar extends StatelessWidget {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ],
             ),
@@ -372,6 +389,105 @@ class _BalanceCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Profile Completion Card ──────────────────────────────────────────────────
+
+class _ProfileCompletionCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final ext = context.ajoTheme;
+    const progress = 0.75;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.ambientShadow(ext.ambientShadowColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Complete Your Profile',
+                        style: AppTypography.titleMd(cs.onSurface)),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Unlock all features by finishing your account setup.',
+                      style: AppTypography.bodySm(cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.verified_user_rounded,
+                    color: cs.primary, size: 18),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text('${(progress * 100).toInt()}% Completed',
+                  style: AppTypography.labelMd(cs.primary)
+                      .copyWith(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Text('3/4 Steps',
+                  style: AppTypography.labelSm(cs.onSurfaceVariant)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(100),
+            child: SizedBox(
+              height: 6,
+              child: Stack(children: [
+                Container(color: cs.surfaceContainerHighest),
+                FractionallySizedBox(
+                  widthFactor: progress,
+                  child: Container(color: cs.primary),
+                ),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const KycScreen()),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: cs.primary),
+              ),
+              child: Text(
+                'Finish Setup Now',
+                style: AppTypography.labelLg(cs.primary)
+                    .copyWith(fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
         ],
       ),
@@ -595,6 +711,10 @@ class _BottomNav extends StatelessWidget {
               icon: Icons.group_outlined,
               label: 'Pools',
               selected: false,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const ExploreGroupsScreen()),
+              ),
             ),
             const Expanded(child: SizedBox()), // FAB space
             _NavItem(
@@ -619,10 +739,12 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.selected,
+    this.onTap,
   });
   final IconData icon;
   final String label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -631,7 +753,7 @@ class _NavItem extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
