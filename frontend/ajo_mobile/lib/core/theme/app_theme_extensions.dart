@@ -40,7 +40,7 @@ class AjoThemeExtension extends ThemeExtension<AjoThemeExtension> {
   /// Shadow colour tinted by on-surface (rgba(44,47,48, 0.06) light)
   final Color ambientShadowColor;
 
-  // ─── Light / Dark presets ─────────────────────────────────────────────────
+  // --- Light / Dark presets -------------------------------------------------
 
   static const light = AjoThemeExtension(
     primaryDim: Color(0xFF005D2A),
@@ -64,7 +64,7 @@ class AjoThemeExtension extends ThemeExtension<AjoThemeExtension> {
     ambientShadowColor: Color(0x0F000000), // 6 % black
   );
 
-  // ─── ThemeExtension boilerplate ───────────────────────────────────────────
+  // --- ThemeExtension boilerplate -------------------------------------------
 
   @override
   AjoThemeExtension copyWith({

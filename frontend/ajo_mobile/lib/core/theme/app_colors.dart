@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Semantic color tokens for the Ajo design system.
 /// Derived from the "Forest & Fog" palette in DESIGN.md.
 abstract class AppColors {
-  // ─── Light Scheme ────────────────────────────────────────────────────────
+  // --- Light Scheme --------------------------------------------------------
   static const light = AjoColorTokens(
     // Primary – vibrant professional green
     primary: Color(0xFF006A31),
@@ -56,7 +56,7 @@ abstract class AppColors {
     shadow: Color(0xFF2C2F30),
   );
 
-  // ─── Dark Scheme ─────────────────────────────────────────────────────────
+  // --- Dark Scheme ---------------------------------------------------------
   static const dark = AjoColorTokens(
     // Primary – lifted for dark surfaces
     primary: Color(0xFF5BC98A),

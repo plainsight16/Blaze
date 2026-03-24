@@ -16,7 +16,7 @@ import 'app_typography.dart';
 /// )
 /// ```
 abstract class AppTheme {
-  // ─── Shape tokens ─────────────────────────────────────────────────────────
+  // --- Shape tokens ---------------------------------------------------------
   // Per DESIGN.md: minimum sm (0.25rem ≈ 4dp), standard DEFAULT (0.5rem ≈ 8dp)
   static const _shapeSmall = RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -29,7 +29,7 @@ abstract class AppTheme {
   );
   static const _shapeFull = StadiumBorder();
 
-  // ─── Ambient shadow ───────────────────────────────────────────────────────
+  // --- Ambient shadow -------------------------------------------------------
   // "extra-diffused": offset 0 12, blur 32, 6 % tinted by on-surface
   static List<BoxShadow> ambientShadow(Color shadowColor) => [
         BoxShadow(
@@ -40,13 +40,13 @@ abstract class AppTheme {
         ),
       ];
 
-  // ─── Light ────────────────────────────────────────────────────────────────
+  // --- Light ----------------------------------------------------------------
   static ThemeData get light => _build(AppColors.light, Brightness.light);
 
-  // ─── Dark ─────────────────────────────────────────────────────────────────
+  // --- Dark -----------------------------------------------------------------
   static ThemeData get dark => _build(AppColors.dark, Brightness.dark);
 
-  // ─── Builder ──────────────────────────────────────────────────────────────
+  // --- Builder --------------------------------------------------------------
   static ThemeData _build(
     AjoColorTokens tokens,
     Brightness brightness,
@@ -69,10 +69,10 @@ abstract class AppTheme {
       textTheme: textTheme,
       extensions: [ext],
 
-      // ── Scaffold / background ──────────────────────────────────────────
+      // -- Scaffold / background ------------------------------------------
       scaffoldBackgroundColor: colorScheme.surface,
 
-      // ── AppBar ────────────────────────────────────────────────────────
+      // -- AppBar --------------------------------------------------------
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface.withValues(alpha: 0.80),
         foregroundColor: colorScheme.onSurface,
@@ -85,7 +85,7 @@ abstract class AppTheme {
             : SystemUiOverlayStyle.dark,
       ),
 
-      // ── Cards ─────────────────────────────────────────────────────────
+      // -- Cards ---------------------------------------------------------
       // surfaceContainerLowest ("pure white lift") on surfaceContainer bg
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLowest,
@@ -95,7 +95,7 @@ abstract class AppTheme {
         shadowColor: ext.ambientShadowColor,
       ),
 
-      // ── Elevated buttons (Primary CTA) ────────────────────────────────
+      // -- Elevated buttons (Primary CTA) --------------------------------
       // Gradient is applied via a custom ButtonStyle in widgets; here we
       // set the fallback flat colour and shape.
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -109,7 +109,7 @@ abstract class AppTheme {
         ),
       ),
 
-      // ── Filled buttons (Secondary) ────────────────────────────────────
+      // -- Filled buttons (Secondary) ------------------------------------
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.secondaryContainer,
@@ -122,7 +122,7 @@ abstract class AppTheme {
         ),
       ),
 
-      // ── Text buttons (Tertiary ghost) ─────────────────────────────────
+      // -- Text buttons (Tertiary ghost) ---------------------------------
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
@@ -132,7 +132,7 @@ abstract class AppTheme {
         ),
       ),
 
-      // ── Outlined buttons ──────────────────────────────────────────────
+      // -- Outlined buttons ----------------------------------------------
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
@@ -146,7 +146,7 @@ abstract class AppTheme {
         ),
       ),
 
-      // ── Input fields ──────────────────────────────────────────────────
+      // -- Input fields --------------------------------------------------
       inputDecorationTheme: InputDecorationTheme(
         // Resting: surfaceContainerHigh, no border
         filled: true,
@@ -183,7 +183,7 @@ abstract class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
 
-      // ── Bottom navigation ─────────────────────────────────────────────
+      // -- Bottom navigation ---------------------------------------------
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: colorScheme.surfaceContainerLowest,
         selectedItemColor: colorScheme.primary,
@@ -195,7 +195,7 @@ abstract class AppTheme {
             AppTypography.labelSm(colorScheme.onSurfaceVariant),
       ),
 
-      // ── Navigation bar (Material 3) ───────────────────────────────────
+      // -- Navigation bar (Material 3) -----------------------------------
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surfaceContainerLowest,
         indicatorColor: colorScheme.secondaryContainer,
@@ -214,7 +214,7 @@ abstract class AppTheme {
         elevation: 0,
       ),
 
-      // ── Chips ─────────────────────────────────────────────────────────
+      // -- Chips ---------------------------------------------------------
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerLow,
         selectedColor: colorScheme.secondaryContainer,
@@ -225,7 +225,7 @@ abstract class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       ),
 
-      // ── Divider ───────────────────────────────────────────────────────
+      // -- Divider -------------------------------------------------------
       // Per DESIGN.md "No-Line Rule" — use spacing or bg shifts, not lines.
       dividerTheme: DividerThemeData(
         color: Colors.transparent,
@@ -233,7 +233,7 @@ abstract class AppTheme {
         space: 0,
       ),
 
-      // ── Dialogs / Sheets ──────────────────────────────────────────────
+      // -- Dialogs / Sheets ----------------------------------------------
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surfaceContainerLowest,
         elevation: 0,
@@ -253,7 +253,7 @@ abstract class AppTheme {
         dragHandleColor: colorScheme.outlineVariant,
       ),
 
-      // ── List tiles ────────────────────────────────────────────────────
+      // -- List tiles ----------------------------------------------------
       listTileTheme: ListTileThemeData(
         tileColor: Colors.transparent,
         contentPadding:
@@ -264,7 +264,7 @@ abstract class AppTheme {
         iconColor: colorScheme.onSurfaceVariant,
       ),
 
-      // ── Snackbar ──────────────────────────────────────────────────────
+      // -- Snackbar ------------------------------------------------------
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle:
@@ -274,7 +274,7 @@ abstract class AppTheme {
         elevation: 0,
       ),
 
-      // ── FAB ───────────────────────────────────────────────────────────
+      // -- FAB -----------------------------------------------------------
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
@@ -282,7 +282,7 @@ abstract class AppTheme {
         shape: _shapeFull,
       ),
 
-      // ── Progress indicators ───────────────────────────────────────────
+      // -- Progress indicators -------------------------------------------
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colorScheme.primary,
         linearTrackColor: colorScheme.surfaceContainerHighest,
@@ -291,7 +291,7 @@ abstract class AppTheme {
         borderRadius: BorderRadius.circular(100),
       ),
 
-      // ── Switch / Checkbox / Radio ─────────────────────────────────────
+      // -- Switch / Checkbox / Radio -------------------------------------
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -320,7 +320,7 @@ abstract class AppTheme {
         ),
       ),
 
-      // ── Icon theme ────────────────────────────────────────────────────
+      // -- Icon theme ----------------------------------------------------
       iconTheme: IconThemeData(
         color: colorScheme.onSurfaceVariant,
         size: 24,
