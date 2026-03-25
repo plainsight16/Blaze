@@ -236,7 +236,7 @@ async def provision_user_wallet(
     phone_number: str,
 ) -> User:
     """
-    Provision an Interswitch wallet for a KYC-verified user.
+    Provision a static Interswitch virtual account for a KYC-verified user.
 
     Prerequisites:
     - User must have verified email (verified_at is set)
@@ -244,9 +244,8 @@ async def provision_user_wallet(
 
     Steps:
     1. Validate prerequisites
-    2. Generate system PIN
-    3. Call ISW wallet creation API
-    4. Store wallet details with encrypted PIN
+    2. Call ISW static virtual-account API
+    3. Store the generated funding account details
 
     Args:
         db: Database session
@@ -269,22 +268,13 @@ async def provision_user_wallet(
     if not user.verified_at:
         raise WalletError("Email verification required before wallet provisioning")
 
-    # Generate secure PIN
-    pin = generate_wallet_pin()
-    transaction_ref = generate_wallet_creation_ref(user.id)
-
     logger.info(f"Provisioning wallet for user: {user.id}")
 
     try:
-        # Call Interswitch API
+        account_name = user.full_name
         wallet = await isw.create_wallet(
-            first_name=user.first_name,
-            last_name=user.last_name,
-            email=user.email,
-            phone_number=phone_number,
+            account_name=account_name,
             customer_id=user.id,
-            pin=pin,
-            transaction_ref=transaction_ref,
         )
 
         # Store wallet details
@@ -293,12 +283,12 @@ async def provision_user_wallet(
         user.isw_merchant_code = wallet.merchant_code
         user.isw_virtual_acct_no = wallet.account_number
         user.isw_virtual_acct_bank = wallet.bank_name
-        user.wallet_pin_encrypted = encrypt_pin(pin)
+        user.wallet_pin_encrypted = None
 
         db.commit()
         db.refresh(user)
 
-        logger.info(f"Wallet provisioned for user {user.id}: {wallet.wallet_id}")
+        logger.info(f"Virtual account provisioned for user {user.id}: {wallet.wallet_id}")
         return user
 
     except InterswitchError as e:
@@ -315,8 +305,8 @@ async def provision_group_wallet(
     """
     Provision an Interswitch wallet for a group.
 
-    The group wallet is used to collect contributions and disburse payouts.
-    The wallet PIN is system-generated and never exposed to users.
+    The group wallet is used to collect contributions and can receive deposits
+    through the generated static virtual account.
 
     Prerequisites:
     - Owner must have completed KYC
@@ -340,26 +330,14 @@ async def provision_group_wallet(
     if not owner.bvn_verified:
         raise WalletError("Group owner must complete KYC first")
 
-    if not owner.phone_number:
-        raise WalletError("Group owner must have a phone number")
-
-    # Generate secure system PIN
-    pin = generate_wallet_pin()
     customer_id = f"GRP-{group.id}"
-    transaction_ref = generate_wallet_creation_ref(customer_id)
 
     logger.info(f"Provisioning wallet for group: {group.id}")
 
     try:
-        # Call Interswitch API
         wallet = await isw.create_wallet(
-            first_name="AjoGroup",
-            last_name=group.name[:50],  # Truncate if too long
-            email=owner.email,
-            phone_number=owner.phone_number,
+            account_name=group.name[:100],
             customer_id=customer_id,
-            pin=pin,
-            transaction_ref=transaction_ref,
         )
 
         # Store wallet details
@@ -367,12 +345,12 @@ async def provision_group_wallet(
         group.isw_merchant_code = wallet.merchant_code
         group.isw_virtual_acct_no = wallet.account_number
         group.isw_virtual_acct_bank = wallet.bank_name
-        group.wallet_pin_encrypted = encrypt_pin(pin)
+        group.wallet_pin_encrypted = None
 
         db.commit()
         db.refresh(group)
 
-        logger.info(f"Wallet provisioned for group {group.id}: {wallet.wallet_id}")
+        logger.info(f"Virtual account provisioned for group {group.id}: {wallet.wallet_id}")
         return group
 
     except InterswitchError as e:
@@ -403,6 +381,8 @@ async def get_user_balance(user: User) -> dict:
     """
     if not user.isw_wallet_id:
         raise WalletNotFoundError("User does not have a wallet")
+    if not user.wallet_pin_encrypted:
+        raise WalletError("Balance queries are not supported for static virtual accounts yet")
 
     try:
         balance = await isw.get_wallet_balance(user.isw_wallet_id)
@@ -434,6 +414,8 @@ async def get_group_balance(group: Group) -> dict:
     """
     if not group.isw_wallet_id:
         raise WalletNotFoundError("Group does not have a wallet")
+    if not group.wallet_pin_encrypted:
+        raise WalletError("Balance queries are not supported for static virtual accounts yet")
 
     try:
         balance = await isw.get_wallet_balance(group.isw_wallet_id)
@@ -493,6 +475,8 @@ async def transfer_user_to_group(
         raise WalletNotFoundError("User does not have a wallet")
     if not group.isw_wallet_id:
         raise WalletNotFoundError("Group does not have a wallet")
+    if not user.wallet_pin_encrypted or not group.wallet_pin_encrypted:
+        raise TransferError("Transfers are not supported for static virtual accounts yet")
 
     amount_decimal = Decimal(str(amount))
     narration = narration or f"Contribution to {group.name}"
@@ -651,6 +635,8 @@ async def transfer_group_to_user(
         raise WalletNotFoundError("Group does not have a wallet")
     if not user.isw_wallet_id:
         raise WalletNotFoundError("User does not have a wallet")
+    if not group.wallet_pin_encrypted or not user.wallet_pin_encrypted:
+        raise TransferError("Transfers are not supported for static virtual accounts yet")
 
     if not group.wallet_pin_encrypted:
         raise WalletError("Group wallet PIN not found")

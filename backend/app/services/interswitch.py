@@ -25,17 +25,17 @@ from app.config import (
     ISW_MERCHANT_CODE,
     ISW_PASSPORT_URL,
     ISW_WALLET_BASE_URL,
+    ISW_QA_MERCHANT_CODE,
+    ISW_QA_URL,
+    ISW_QA_CLIENT_ID,
+    ISW_QA_CLIENT_SECRET,
     ENVIRONMENT,
 )
 
 
 logger = logging.getLogger(__name__)
 
-
-# =============================================================================
 # Exceptions
-# =============================================================================
-
 class InterswitchError(Exception):
     """Base exception for Interswitch API errors."""
 
@@ -69,11 +69,7 @@ class InterswitchInsufficientFundsError(InterswitchTransactionError):
     """Insufficient balance for transaction."""
     pass
 
-
-# =============================================================================
 # Response Codes
-# =============================================================================
-
 class ISWResponseCode(str, Enum):
     """Common Interswitch response codes."""
     SUCCESS = "00"
@@ -84,11 +80,7 @@ class ISWResponseCode(str, Enum):
     DUPLICATE_TRANSACTION = "94"
     SYSTEM_ERROR = "96"
 
-
-# =============================================================================
 # Data Classes
-# =============================================================================
-
 @dataclass
 class ISWToken:
     """OAuth2 access token with expiry."""
@@ -135,11 +127,7 @@ class ISWBVNVerificationResult:
     response_message: str
     raw_response: dict[str, Any]
 
-
-# =============================================================================
 # Token Cache (Thread-safe singleton)
-# =============================================================================
-
 class TokenCache:
     """
     In-memory OAuth2 token cache with automatic refresh.
@@ -148,13 +136,8 @@ class TokenCache:
     edge cases where token expires during a request.
     """
 
-    _instance: Optional["TokenCache"] = None
-    _token: Optional[ISWToken] = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+    def __init__(self):
+        self._token: Optional[ISWToken] = None
 
     def get(self) -> Optional[str]:
         """Get cached token if still valid."""
@@ -178,31 +161,21 @@ class TokenCache:
 
 
 _token_cache = TokenCache()
+_qa_token_cache = TokenCache()
 
-
-# =============================================================================
 # Authentication
-# =============================================================================
-
-async def get_access_token() -> str:
-    """
-    Get OAuth2 access token from cache or fetch new one.
-
-    Uses client_credentials grant type as per ISW documentation.
-
-    Returns:
-        Access token string
-
-    Raises:
-        InterswitchAuthError: If authentication fails
-    """
-    # Check cache first
-    cached = _token_cache.get()
+async def _fetch_access_token(
+    client_id: str,
+    client_secret: str,
+    cache: TokenCache,
+    integration_name: str,
+) -> str:
+    """Fetch and cache an OAuth2 access token for a specific integration."""
+    cached = cache.get()
     if cached:
         return cached
 
-    # Fetch new token
-    logger.info("Fetching new Interswitch OAuth2 token")
+    logger.info("Fetching new Interswitch OAuth2 token for %s", integration_name)
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -210,14 +183,14 @@ async def get_access_token() -> str:
                 f"{ISW_PASSPORT_URL}/oauth/token",
                 data={
                     "grant_type": "client_credentials",
-                    "scope": "profile"
+                    "scope": "profile",
                 },
-                auth=(ISW_CLIENT_ID, ISW_CLIENT_SECRET),
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                auth=(client_id, client_secret),
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
             if response.status_code != 200:
-                logger.error(f"ISW auth failed: {response.status_code} - {response.text}")
+                logger.error("ISW auth failed for %s: %s - %s", integration_name, response.status_code, response.text)
                 raise InterswitchAuthError(
                     f"Authentication failed: {response.status_code}"
                 )
@@ -227,14 +200,34 @@ async def get_access_token() -> str:
             token_type = data.get("token_type", "bearer")
             expires_in = data.get("expires_in", 3600)
 
-            _token_cache.set(access_token, token_type, expires_in)
-            logger.info("Successfully obtained ISW access token")
+            cache.set(access_token, token_type, expires_in)
+            logger.info("Successfully obtained ISW access token for %s", integration_name)
 
             return access_token
 
     except httpx.RequestError as e:
-        logger.error(f"ISW auth request failed: {e}")
+        logger.error("ISW auth request failed for %s: %s", integration_name, e)
         raise InterswitchAuthError(f"Network error during authentication: {e}")
+
+
+async def get_access_token() -> str:
+    """Get cached OAuth token for the identity and merchant-wallet APIs."""
+    return await _fetch_access_token(
+        client_id=ISW_CLIENT_ID,
+        client_secret=ISW_CLIENT_SECRET,
+        cache=_token_cache,
+        integration_name="identity",
+    )
+
+
+async def get_qa_access_token() -> str:
+    """Get cached OAuth token for the static virtual-account API."""
+    return await _fetch_access_token(
+        client_id=ISW_QA_CLIENT_ID,
+        client_secret=ISW_QA_CLIENT_SECRET,
+        cache=_qa_token_cache,
+        integration_name="static_virtual_account",
+    )
 
 
 async def _get_auth_headers() -> dict:
@@ -245,11 +238,15 @@ async def _get_auth_headers() -> dict:
         "Content-Type": "application/json",
     }
 
+async def _get_qa_auth_headers() -> dict:
+    """Build headers with Bearer token for ISW API calls."""
+    token = await get_qa_access_token()
+    return {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
 
-# =============================================================================
 # Response Parsing Helpers
-# =============================================================================
-
 def _find_first_value(payload: Any, keys: set[str]) -> Any | None:
     """Recursively search a payload for the first matching key."""
     if isinstance(payload, dict):
@@ -398,11 +395,7 @@ def _extract_bvn_match(payload: dict[str, Any]) -> Optional[bool]:
 
     return None
 
-
-# =============================================================================
 # Identity Verification
-# =============================================================================
-
 async def verify_bvn_boolean_match(
     first_name: str,
     last_name: str,
@@ -489,94 +482,81 @@ async def verify_bvn_boolean_match(
         raw_response=data,
     )
 
-
-# =============================================================================
 # Wallet Provisioning
-# =============================================================================
-
 async def create_wallet(
-    first_name: str,
-    last_name: str,
-    email: str,
-    phone_number: str,
+    account_name: str,
     customer_id: str,
-    pin: str,
-    transaction_ref: str,
 ) -> ISWWallet:
     """
-    Provision a new Interswitch Merchant Wallet.
+    Create a static virtual account for a customer.
 
-    This creates a wallet with a Wema Bank virtual account number that
-    can receive bank transfers.
+    Endpoint:
+    POST /api/v1/payable/virtualaccount
 
     Args:
-        first_name: Customer's first name
-        last_name: Customer's last name
-        email: Customer's email address
-        phone_number: Customer's phone number (Nigerian format)
+        account_name: Name attached to the generated account
         customer_id: Unique customer identifier (user.id or group.id)
-        pin: 4-digit wallet PIN
-        transaction_ref: Unique reference for this operation
 
     Returns:
-        ISWWallet with wallet details and virtual account
+        ISWWallet with static virtual-account details
 
     Raises:
-        InterswitchWalletError: If wallet creation fails
+        InterswitchWalletError: If account creation fails
     """
-    headers = await _get_auth_headers()
+    headers = await _get_qa_auth_headers()
+    normalized_account_name = " ".join(account_name.split()).strip()
+    if not normalized_account_name:
+        raise InterswitchWalletError("Account name is required for virtual account creation")
 
     payload = {
-        "merchantCode": ISW_MERCHANT_CODE,
-        "customerId": customer_id,
-        "firstName": first_name,
-        "lastName": last_name,
-        "email": email,
-        "mobileNo": phone_number,
-        "pin": pin,
-        "transactionRef": transaction_ref,
+        "accountName": normalized_account_name,
+        "merchantCode": ISW_QA_MERCHANT_CODE,
     }
 
-    logger.info(f"Creating wallet for customer: {customer_id}")
+    logger.info("Creating static virtual account for customer: %s", customer_id)
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"{ISW_WALLET_BASE_URL}/api/v1/wallet",
+                f"{ISW_QA_URL}/api/v1/payable/virtualaccount",
                 json=payload,
                 headers=headers,
             )
 
             data = response.json()
+            if not isinstance(data, dict):
+                raise InterswitchWalletError("Invalid response from virtual account API")
 
-            if response.status_code != 200:
-                logger.error(f"Wallet creation failed: {data}")
+            if response.status_code not in (200, 201):
+                logger.error("Virtual account creation failed: %s", data)
                 raise InterswitchWalletError(
-                    data.get("responseMessage", "Wallet creation failed"),
-                    data.get("responseCode")
+                    _extract_response_message(data) or "Virtual account creation failed",
+                    _extract_response_code(data),
                 )
 
-            logger.info(f"Wallet created successfully: {data.get('walletId')}")
+            payable_code = data.get("payableCode")
+            account_number = data.get("accountNumber")
+            if not payable_code or not account_number:
+                logger.error("Virtual account creation returned incomplete payload: %s", data)
+                raise InterswitchWalletError("Virtual account response missing account details")
+
+            logger.info("Static virtual account created successfully: %s", payable_code)
 
             return ISWWallet(
-                wallet_id=data["walletId"],
-                merchant_code=data.get("merchantCode", ISW_MERCHANT_CODE),
+                wallet_id=str(payable_code),
+                merchant_code=str(data.get("merchantCode", ISW_QA_MERCHANT_CODE)),
                 customer_id=data.get("customerId", customer_id),
-                account_number=data["accountNumber"],
-                account_name=data.get("accountName", f"{first_name} {last_name}"),
+                account_number=str(account_number),
+                account_name=str(data.get("accountName", normalized_account_name)),
                 bank_name=data.get("bankName", "Wema Bank"),
-                bank_code=data.get("bankCode", "035"),
+                bank_code=data.get("bankCode", "WEMA"),
             )
 
     except httpx.RequestError as e:
-        logger.error(f"Wallet creation request failed: {e}")
+        logger.error("Virtual account creation request failed: %s", e)
         raise InterswitchWalletError(f"Network error: {e}")
 
-
-# =============================================================================
 # Balance Query
-# =============================================================================
-
 async def get_wallet_balance(wallet_id: str) -> ISWBalance:
     """
     Query wallet balance from Interswitch.
@@ -628,11 +608,7 @@ async def get_wallet_balance(wallet_id: str) -> ISWBalance:
         logger.error(f"Balance query request failed: {e}")
         raise InterswitchWalletError(f"Network error: {e}")
 
-
-# =============================================================================
 # Wallet Transactions
-# =============================================================================
-
 async def debit_wallet(
     wallet_id: str,
     amount: float,
@@ -785,11 +761,7 @@ async def credit_wallet(
         logger.error(f"Credit request failed: {e}")
         raise InterswitchTransactionError(f"Network error: {e}")
 
-
-# =============================================================================
 # Transaction Reversal
-# =============================================================================
-
 async def reverse_transaction(
     original_reference: str,
     reversal_reference: str,
@@ -853,11 +825,7 @@ async def reverse_transaction(
         logger.error(f"Reversal request failed: {e}")
         raise InterswitchTransactionError(f"Network error: {e}")
 
-
-# =============================================================================
 # Transaction Status Query
-# =============================================================================
-
 async def get_transaction_status(reference: str) -> ISWTransactionResult:
     """
     Query the status of a transaction.
@@ -905,11 +873,7 @@ async def get_transaction_status(reference: str) -> ISWTransactionResult:
         logger.error(f"Transaction status query failed: {e}")
         raise InterswitchTransactionError(f"Network error: {e}")
 
-
-# =============================================================================
 # Health Check
-# =============================================================================
-
 async def health_check() -> bool:
     """
     Check if Interswitch API is accessible.

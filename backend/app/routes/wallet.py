@@ -85,6 +85,11 @@ async def get_wallet_balance(
     except WalletNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except WalletError as e:
+        if "not supported for static virtual accounts" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
         logger.error(f"Balance query failed for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -136,6 +141,11 @@ async def get_group_wallet_balance(
     except WalletNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except WalletError as e:
+        if "not supported for static virtual accounts" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
         logger.error(f"Balance query failed for group {group.id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -225,6 +235,11 @@ async def transfer_to_group(
         )
 
     except TransferError as e:
+        if "not supported for static virtual accounts" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
         logger.error(f"Transfer failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
