@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.auth import MessageResponse
 from app.schemas.groups import (
+    ConfigureGroupRequest,
     CreateGroupRequest,
     GroupRequestResponse,
     GroupResponse,
@@ -72,13 +73,54 @@ def decline_invite(
 # -- Group management ------------------------------------------
 
 @router.post("", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
-def create_group(
+async def create_group(
     data: CreateGroupRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> GroupResponse:
-    group = svc.create_group(data.name, data.description, data.type, current_user, db)
-    return GroupResponse.model_validate(group)
+    group = await svc.create_group(data.name, data.description, data.type, current_user, db)
+    return GroupResponse.from_group(group)
+
+
+@router.get("/{group_id}", response_model=GroupResponse)
+def get_group(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> GroupResponse:
+    group = svc.get_group(current_user, group_id, db)
+    return GroupResponse.from_group(group)
+
+
+@router.patch("/{group_id}/configure", response_model=GroupResponse)
+def configure_group(
+    group_id: str,
+    data: ConfigureGroupRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> GroupResponse:
+    group = svc.configure_group(
+        actor=current_user,
+        group_id=group_id,
+        contribution_amount=data.contribution_amount,
+        frequency=data.frequency,
+        cycle_length=data.cycle_length,
+        max_members=data.max_members,
+        start_date=data.start_date,
+        db=db,
+    )
+    return GroupResponse.from_group(group)
+
+
+@router.post("/{group_id}/provision-wallet", response_model=GroupResponse)
+async def provision_wallet(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> GroupResponse:
+    """Provision or retry wallet provisioning for a group. Admin only."""
+    group = await svc.provision_wallet(current_user, group_id, db)
+    return GroupResponse.from_group(group)
 
 
 @router.delete("/{group_id}", response_model=MessageResponse)
