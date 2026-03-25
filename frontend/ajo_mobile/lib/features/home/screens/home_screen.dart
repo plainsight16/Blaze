@@ -851,7 +851,7 @@ class _ProfileCompletionCard extends StatelessWidget {
   }
 }
 
-// ─── Section Header ───────────────────────────────────────────────────────────
+// --- Section Header -----------------------------------------------------------
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, this.action});
@@ -872,7 +872,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─── Quick Actions Grid ───────────────────────────────────────────────────────
+// --- Quick Actions Grid -------------------------------------------------------
 
 class _QuickActionsGrid extends StatelessWidget {
   @override
@@ -959,7 +959,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// ─── Pool Card ────────────────────────────────────────────────────────────────
+// --- Pool Card ----------------------------------------------------------------
 
 class _PoolCard extends StatelessWidget {
   const _PoolCard({
@@ -1085,7 +1085,7 @@ class _PoolCard extends StatelessWidget {
   }
 }
 
-// ─── Bottom Navigation ────────────────────────────────────────────────────────
+// --- Bottom Navigation --------------------------------------------------------
 
 class _BottomNav extends StatelessWidget {
   const _BottomNav({

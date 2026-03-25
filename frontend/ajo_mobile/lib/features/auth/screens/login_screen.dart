@@ -249,6 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// --- Shared sub-widgets -------------------------------------------------------
+
 class _AppBar extends StatelessWidget {
   const _AppBar();
 
