@@ -5,6 +5,8 @@ from app.schemas.kyc import KYCRequest
 from app.services.kyc import verify_bvn, attach_bank_statement
 from app.utils.dependencies import get_current_user, get_db
 
+router = APIRouter()
+
 @router.post("/verify")
 def verify_kyc(payload: KYCRequest, db: Session = Depends(get_db), cur_user: User = Depends(get_current_user)):
     user_id = cur_user.id
