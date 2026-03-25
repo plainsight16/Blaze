@@ -65,3 +65,12 @@ def generate_refresh_token() -> tuple[str, str]:
 
 def refresh_token_expiry() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+
+import hashlib
+import os
+
+
+def hash_bvn(bvn: str) -> str:
+    salt = os.getenv("BVN_SALT", "default_salt")  # use env in prod
+    return hashlib.sha256(f"{bvn}{salt}".encode()).hexdigest()
