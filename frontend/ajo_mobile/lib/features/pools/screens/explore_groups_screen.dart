@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
-import '../../../core/widgets/ajo_nav_bar.dart';
 import '../models/group_model.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
+import '../../profile/screens/notifications_screen.dart';
 
 class ExploreGroupsScreen extends StatefulWidget {
   const ExploreGroupsScreen({super.key});
@@ -65,10 +65,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
         child: const Icon(Icons.add, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: const AjoNavBar(
-        active: AjoTab.pools,
-        showFabNotch: true,
-      ),
+
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -91,10 +88,17 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
                         color: cs.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        color: cs.onSurface,
-                        size: 22,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.notifications_outlined,
+                          color: cs.onSurface,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ],

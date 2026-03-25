@@ -12,6 +12,7 @@ class AjoGradientButton extends StatelessWidget {
     this.suffixIcon,
     this.width = double.infinity,
     this.height = 56,
+    this.isLoading = false,
   });
 
   final String label;
@@ -19,12 +20,14 @@ class AjoGradientButton extends StatelessWidget {
   final IconData? suffixIcon;
   final double width;
   final double height;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final ext = context.ajoTheme;
-    final enabled = onPressed != null;
+    final busy = isLoading;
+    final enabled = onPressed != null && !busy;
 
     return SizedBox(
       width: width,
@@ -54,27 +57,45 @@ class AjoGradientButton extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
-            onTap: onPressed,
+            onTap: enabled ? onPressed : null,
             borderRadius: BorderRadius.circular(8),
             child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: AppTypography.labelLg(
-                      enabled ? cs.onPrimary : cs.onSurfaceVariant,
-                    ),
-                  ),
-                  if (suffixIcon != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      suffixIcon,
-                      color: enabled ? cs.onPrimary : cs.onSurfaceVariant,
-                      size: 20,
-                    ),
-                  ],
-                ],
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: busy
+                    ? SizedBox(
+                        key: const ValueKey('loading'),
+                        height: 26,
+                        width: 26,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: cs.primary,
+                        ),
+                      )
+                    : Row(
+                        key: const ValueKey('label'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            style: AppTypography.labelLg(
+                              onPressed != null
+                                  ? cs.onPrimary
+                                  : cs.onSurfaceVariant,
+                            ),
+                          ),
+                          if (suffixIcon != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              suffixIcon,
+                              color: onPressed != null
+                                  ? cs.onPrimary
+                                  : cs.onSurfaceVariant,
+                              size: 20,
+                            ),
+                          ],
+                        ],
+                      ),
               ),
             ),
           ),
