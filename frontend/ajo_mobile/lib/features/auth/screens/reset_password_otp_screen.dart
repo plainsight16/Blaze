@@ -4,23 +4,28 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../data/mock_auth_api.dart';
-import 'otp_result_screen.dart';
+import 'set_new_password_screen.dart';
 
-class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key, this.contactMask});
+class ResetPasswordOtpScreen extends StatefulWidget {
+  const ResetPasswordOtpScreen({
+    super.key,
+    required this.identifier,
+    required this.contactMask,
+  });
 
-  /// Shown in the subtitle, e.g. masked phone or email.
-  final String? contactMask;
+  final String identifier;
+  final String contactMask;
 
   @override
-  State<OtpScreen> createState() => _OtpScreenState();
+  State<ResetPasswordOtpScreen> createState() => _ResetPasswordOtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen>
+class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen>
     with SingleTickerProviderStateMixin {
   static const _length = 6;
   final _controllers = List.generate(_length, (_) => TextEditingController());
   final _focusNodes = List.generate(_length, (_) => FocusNode());
+
   late final AnimationController _shakeController;
   bool _submitting = false;
   bool _resending = false;
@@ -56,41 +61,34 @@ class _OtpScreenState extends State<OtpScreen>
 
   bool get _isFilled => _controllers.every((c) => c.text.isNotEmpty);
 
-  String get _maskLine {
-    final m = widget.contactMask;
-    if (m != null && m.isNotEmpty) {
-      return 'We\'ve sent a 6-digit verification code to $m';
-    }
-    return 'We\'ve sent a 6-digit verification code to your registered mobile number ••••  ••42';
-  }
-
   Future<void> _playShake() async {
     await _shakeController.forward(from: 0);
   }
 
-  Future<void> _submit() async {
+  Future<void> _verify() async {
     FocusScope.of(context).unfocus();
     final code = _controllers.map((c) => c.text).join();
     if (code.length != _length) return;
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.verifyOtp(code);
+      await mockAuthApi.verifyPasswordResetOtp(code);
       if (!mounted) return;
       await Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => const OtpResultScreen(success: true),
+          builder: (_) => SetNewPasswordScreen(identifier: widget.identifier),
         ),
       );
     } on MockAuthException catch (_) {
       await _playShake();
       if (!mounted) return;
-      await Navigator.push<void>(
-        context,
-        MaterialPageRoute<void>(
-          builder: (_) => const OtpResultScreen(success: false),
-        ),
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes.first.requestFocus();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid reset code')),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -101,10 +99,12 @@ class _OtpScreenState extends State<OtpScreen>
     if (_resending) return;
     setState(() => _resending = true);
     try {
-      await mockAuthApi.requestOtpResend();
+      await mockAuthApi.requestPasswordReset(
+        identifier: widget.identifier,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('A new code has been sent (mock).')),
+        const SnackBar(content: Text('A new reset code has been sent (mock).')),
       );
     } on MockAuthException catch (e) {
       if (mounted) {
@@ -120,6 +120,7 @@ class _OtpScreenState extends State<OtpScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
     final shakeAnimation = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0.0, end: -6.0), weight: 1),
       TweenSequenceItem(tween: Tween(begin: -6.0, end: 6.0), weight: 2),
@@ -136,15 +137,14 @@ class _OtpScreenState extends State<OtpScreen>
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.maybePop(context),
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: cs.onSurface,
-                    ),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: cs.onSurface),
                   ),
                   Expanded(
                     child: Center(
@@ -161,7 +161,6 @@ class _OtpScreenState extends State<OtpScreen>
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -188,12 +187,11 @@ class _OtpScreenState extends State<OtpScreen>
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _maskLine,
+                      'We\'ve sent a 6-digit reset code to ${widget.contactMask}',
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMd(cs.onSurfaceVariant),
                     ),
                     const SizedBox(height: 40),
-
                     AnimatedBuilder(
                       animation: shakeAnimation,
                       builder: (context, child) => Transform.translate(
@@ -204,7 +202,8 @@ class _OtpScreenState extends State<OtpScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(_length, (i) {
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5),
                             child: _OtpBox(
                               controller: _controllers[i],
                               focusNode: _focusNodes[i],
@@ -215,15 +214,11 @@ class _OtpScreenState extends State<OtpScreen>
                       ),
                     ),
                     const SizedBox(height: 32),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 16,
-                          color: cs.onSurfaceVariant,
-                        ),
+                        Icon(Icons.schedule_rounded,
+                            size: 16, color: cs.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Text(
                           'Expires in 01:54',
@@ -232,17 +227,13 @@ class _OtpScreenState extends State<OtpScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-
                     TextButton(
                       onPressed: _resending ? null : _resend,
                       child: _resending
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: cs.primary,
-                              ),
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(
                               'Didn\'t receive code? Resend',
@@ -254,15 +245,14 @@ class _OtpScreenState extends State<OtpScreen>
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: AnimatedBuilder(
                 animation: Listenable.merge(_controllers),
                 builder: (context, _) => AjoGradientButton(
-                  label: 'Verify & Proceed',
+                  label: 'Verify & Reset',
                   isLoading: _submitting,
-                  onPressed: (_isFilled && !_submitting) ? _submit : null,
+                  onPressed: (_isFilled && !_submitting) ? _verify : null,
                 ),
               ),
             ),
@@ -326,3 +316,4 @@ class _OtpBox extends StatelessWidget {
     );
   }
 }
+
