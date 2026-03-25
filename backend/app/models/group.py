@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, UniqueConstraint, Integer
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -16,6 +16,8 @@ class Group(Base):
 
     memberships = relationship("UserGroup",    back_populates="group", cascade="all, delete-orphan")
     requests    = relationship("GroupRequest", back_populates="group", cascade="all, delete-orphan")
+
+    monthly_con = Column(Integer, nullable=False, default=1000)
 
 
 class UserGroup(Base):

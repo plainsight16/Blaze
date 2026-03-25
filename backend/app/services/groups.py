@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.group import Group, GroupRequest, UserGroup
 from app.models.user import User
+from app.models.kyc import KYC
 
 
 # -- Internal helpers ------------------------------------------
@@ -62,6 +63,44 @@ def _get_pending_request(user_id: str, group_id: str, db: Session) -> GroupReque
         GroupRequest.status   == "pending",
     ).first()
 
+def _get_user_eligibility(user_id: str, monthly_con: int, db: Session) -> bool:
+    """
+    Return True if the user's KYC bank-statement qualifies them for the group.
+ 
+    Raises HTTP 402 / 403 with a clear message instead of crashing when KYC
+    data is missing or incomplete.
+ 
+    Eligibility rule: (averageBalance / 3) >= monthly_con
+    """
+    kyc_row = db.query(KYC).filter(KYC.user_id == user_id).first()
+ 
+    if not kyc_row:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "KYC record not found. Please complete BVN verification first.",
+        )
+ 
+    if kyc_row.verified != "true":
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "KYC not yet verified. Please complete verification before joining a group.",
+        )
+ 
+    if not kyc_row.bank_statement:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Bank statement not generated yet. Please generate your statement first.",
+        )
+ 
+    try:
+        avg_balance = kyc_row.bank_statement["averageValue"]["averageBalance"]
+    except (KeyError, TypeError):
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Bank statement data is malformed. Please regenerate your statement.",
+        )
+ 
+    return (avg_balance / 3) >= monthly_con
 
 def _approve_into_group(user_id: str, group_id: str, db: Session) -> None:
     """Create a UserGroup row — shared by approve and accept paths."""
@@ -220,16 +259,26 @@ def leave_group(actor: User, group_id: str, db: Session) -> None:
 
 def request_to_join(actor: User, group_id: str, db: Session) -> GroupRequest:
     group = _get_group_or_404(group_id, db)
-
-    if group.type and group.type == "private":
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "This group is private. You need an invite.")
-
+ 
+    if group.type == "private":
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "This group is private. You need an invite.",
+        )
+ 
     if _get_membership(actor.id, group_id, db):
         raise HTTPException(status.HTTP_409_CONFLICT, "Already a member.")
-
+ 
     if _get_pending_request(actor.id, group_id, db):
         raise HTTPException(status.HTTP_409_CONFLICT, "You already have a pending request.")
-
+    
+    if not _get_user_eligibility(actor.id, group.monthly_con, db):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "You are not eligible to join this group. "
+            "Your average balance does not meet the monthly contribution requirement.",
+        )
+ 
     req = GroupRequest(
         id           = str(uuid.uuid4()),
         group_id     = group_id,

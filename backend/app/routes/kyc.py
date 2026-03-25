@@ -19,7 +19,7 @@ def verify_kyc(payload: KYCRequest, db: Session = Depends(get_db), cur_user: Use
         }
 
     except ValueError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid BVN")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/generate-statement")
@@ -35,4 +35,4 @@ def generate_statement(db: Session = Depends(get_db), cur_user: User = Depends(g
         }
 
     except ValueError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "error generating statement")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))

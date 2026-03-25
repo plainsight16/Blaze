@@ -13,9 +13,12 @@ def verify_bvn(db: Session, user_id: str, bvn: str):
 
     bvn_hashed = hash_bvn(bvn)
 
-    existing = db.query(KYC).filter(KYC.bvn_hash == bvn_hashed).first()
-    if existing:
+    existing_bvn = db.query(KYC).filter(KYC.bvn_hash == bvn_hashed).first()
+    existing_user = db.query(KYC).filter(KYC.user_id == user_id).first()
+    if existing_bvn:
         raise ValueError("BVN already linked to another account")
+    elif existing_user:
+        raise ValueError("User already linked to a BVN")
 
     kyc = KYC(
         user_id=user_id,
@@ -78,7 +81,7 @@ def attach_bank_statement(db: Session, user_id: str):
         raise ValueError("User not found")
 
     kyc = db.query(KYC).filter(KYC.user_id == user_id).first()
-    if not kyc or kyc.verified != "true":
+    if not kyc or not kyc.verified:
         raise ValueError("KYC not verified")
 
     statement = generate_bank_statement()
