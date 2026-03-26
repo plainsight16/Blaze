@@ -10,9 +10,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import app.models  # noqa: F401 — ensure all ORM models are registered with metadata
 from app.config import ALLOWED_ORIGINS
-from app.routes import auth, groups, kyc
+from app.routes import auth, home, kyc, groups
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
@@ -49,6 +48,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
+app.include_router(home.router,   prefix="",   tags=["Docs"])
 app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
 app.include_router(kyc.router,    prefix="/kyc",    tags=["KYC"])
 app.include_router(groups.router, prefix="/groups", tags=["Groups"])

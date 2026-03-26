@@ -130,23 +130,30 @@ def generate_bank_statement(db: Session, user_id: str) -> BankStatement:
             "KYC not verified. Complete verification before generating a statement.",
         )
 
-    now  = datetime.now(timezone.utc)
-    data = _build_statement_data()
+    now      = datetime.now(timezone.utc)
+    raw_data = _build_statement_data()
+    avg      = raw_data["averageValue"]
 
     existing = db.query(BankStatement).filter(BankStatement.user_id == user_id).first()
     if existing:
-        existing.data       = data
-        existing.updated_at = now
+        existing.average_balance = avg["averageBalance"]
+        existing.total_credit    = avg["totalCredit"]
+        existing.total_debit     = avg["totalDebit"]
+        existing.raw_data        = raw_data["monthOnMonth"]
+        existing.updated_at      = now
         db.commit()
         db.refresh(existing)
         return existing
 
     statement = BankStatement(
-        user_id      = user_id,
-        kyc_id       = kyc.id,
-        data         = data,
-        generated_at = now,
-        updated_at   = now,
+        user_id         = user_id,
+        kyc_id          = kyc.id,
+        average_balance = avg["averageBalance"],
+        total_credit    = avg["totalCredit"],
+        total_debit     = avg["totalDebit"],
+        raw_data        = raw_data["monthOnMonth"],
+        generated_at    = now,
+        updated_at      = now,
     )
     db.add(statement)
     db.commit()

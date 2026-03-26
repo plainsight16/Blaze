@@ -1,28 +1,28 @@
-from sqlalchemy import Boolean, Column, String, JSON, ForeignKey
-from sqlalchemy.orm import relationship
 import uuid
+
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
 class KYC(Base):
+    """
+    Stores BVN verification state for a user.
+    Bank statement data lives in its own BankStatement table (one-to-one via user_id).
+    """
     __tablename__ = "kyc"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
-    # unique=True added: one KYC record per user is already enforced in the
-    # service layer, but the DB constraint makes it authoritative and prevents
-    # race-condition duplicates.
-    # ondelete="CASCADE" added: orphaned KYC rows were left behind when a user
-    # was deleted because the original FK had no cascade rule.
+    id:       Mapped[str]  = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id:  Mapped[str]  = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    bvn_hash: Mapped[str]  = mapped_column(String, nullable=False, unique=True)
 
-    bvn_hash = Column(String, nullable=False, unique=True)
+    # "pending" | "verified" | "failed"
+    status:   Mapped[str]  = mapped_column(String, nullable=False, default="pending")
 
-    verified = Column(String, nullable=False, default="false")
-    # nullable=False added: "false" default is meaningless if the column can be NULL.
-    # Consider migrating this to a Boolean column in a future revision.
+    user:     Mapped["User"]           = relationship("User",          back_populates="kyc")
+    bank_statement: Mapped["BankStatement | None"] = relationship("BankStatement", back_populates="kyc", uselist=False)
 
-    bank_statement = Column(JSON, nullable=True)
-
-    user = relationship("User", back_populates="kyc")
-    # back_populates added to keep the relationship bidirectional and consistent
-    # with SQLAlchemy best practice. Requires adding `kyc` relationship to User.
+    @property
+    def is_verified(self) -> bool:
+        return self.status == "verified"

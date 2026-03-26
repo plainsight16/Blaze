@@ -1,21 +1,25 @@
-from sqlalchemy import Boolean, Column, DateTime, String
-from sqlalchemy.orm import relationship
+import uuid
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id            = Column(String,  primary_key=True)
-    email         = Column(String,  unique=True,  nullable=False, index=True)
-    username      = Column(String,  unique=True,  nullable=False)
-    first_name    = Column(String,  nullable=False)
-    last_name     = Column(String,  nullable=False)
-    password_hash = Column(String,  nullable=False)
-    is_active     = Column(Boolean, nullable=False, default=True)
-    verified_at   = Column(DateTime(timezone=True), nullable=True)
-    created_at    = Column(DateTime(timezone=True), nullable=False)
+    id:            Mapped[str]            = mapped_column(String,  primary_key=True, default=lambda: str(uuid.uuid4()))
+    email:         Mapped[str]            = mapped_column(String,  unique=True,  nullable=False, index=True)
+    username:      Mapped[str]            = mapped_column(String,  unique=True,  nullable=False)
+    first_name:    Mapped[str]            = mapped_column(String,  nullable=False)
+    last_name:     Mapped[str]            = mapped_column(String,  nullable=False)
+    password_hash: Mapped[str]            = mapped_column(String,  nullable=False)
+    is_active:     Mapped[bool]           = mapped_column(Boolean, nullable=False, default=True)
+    verified_at:   Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at:    Mapped[datetime]       = mapped_column(DateTime(timezone=True), nullable=False)
 
-    kyc = relationship("KYC", back_populates="user", uselist=False)
-    # Added bidirectional side of the KYC relationship.
-    # uselist=False because it's a one-to-one relation.
+    # Relationships (back-populated from child tables)
+    kyc:           Mapped["KYC | None"]           = relationship("KYC",          back_populates="user", uselist=False)
+    bank_statement: Mapped["BankStatement | None"] = relationship("BankStatement", back_populates="user", uselist=False)

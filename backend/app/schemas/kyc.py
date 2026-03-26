@@ -18,7 +18,7 @@ class KYCStatusResponse(BaseModel):
 # ── Bank Statement ────────────────────────────────────────────────────────────
 
 class MonthOnMonth(BaseModel):
-    phone:          str
+    """Single month row — stored in raw_data JSONB, never queried by column."""
     totalDebit:     float
     debitCount:     float
     totalCredit:    float
@@ -27,24 +27,18 @@ class MonthOnMonth(BaseModel):
     averageBalance: float
 
 
-class AverageValue(BaseModel):
-    totalDebit:     float
-    debitCount:     float
-    totalCredit:    float
-    creditCount:    float
-    averageBalance: float
-
-
-class BankStatementData(BaseModel):
-    monthOnMonth: list[MonthOnMonth]
-    averageValue: AverageValue
-
-
 class BankStatementResponse(BaseModel):
-    id:           str
-    user_id:      str
-    data:         BankStatementData
-    generated_at: datetime
-    updated_at:   datetime
+    """
+    Reflects the actual model columns.
+    Aggregates are real typed fields; month rows come back from raw_data.
+    """
+    id:              str
+    user_id:         str
+    average_balance: float
+    total_credit:    float
+    total_debit:     float
+    raw_data:        list[MonthOnMonth]
+    generated_at:    datetime
+    updated_at:      datetime
 
     model_config = {"from_attributes": True}

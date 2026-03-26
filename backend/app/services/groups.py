@@ -88,7 +88,7 @@ def _assert_user_eligible(user_id: str, monthly_con: int, db: Session) -> None:
     Raise HTTP 403 with a precise reason if the user does not meet the group's
     monthly-contribution threshold.
 
-    Eligibility rule:  (averageBalance / 3) >= monthly_con
+    Eligibility rule:  (average_balance / 3) >= monthly_con
     """
     kyc = db.query(KYC).filter(KYC.user_id == user_id).first()
     if not kyc:
@@ -109,15 +109,7 @@ def _assert_user_eligible(user_id: str, monthly_con: int, db: Session) -> None:
             "No bank statement found. Generate your statement before joining a group.",
         )
 
-    try:
-        avg_balance: float = statement.data["averageValue"]["averageBalance"]
-    except (KeyError, TypeError):
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            "Bank statement data is malformed. Please regenerate your statement.",
-        )
-
-    if (avg_balance / 3) < monthly_con:
+    if (statement.average_balance / 3) < monthly_con:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
             f"Insufficient average balance. Required: ₦{monthly_con * 3:,.2f} average balance.",

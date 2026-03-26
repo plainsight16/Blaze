@@ -1,49 +1,57 @@
-from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, UniqueConstraint, Integer
-from sqlalchemy.orm import relationship
+import uuid
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
 class Group(Base):
     __tablename__ = "groups"
 
-    id          = Column(String,  primary_key=True)
-    name        = Column(String,  unique=True, nullable=False, index=True)
-    description = Column(String,  nullable=True)
-    type        = Column(String,  nullable=False, default="public")   # "public" | "private"
-    owner_id    = Column(String,  ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    is_active   = Column(Boolean, nullable=False, default=True)
-    created_at  = Column(DateTime(timezone=True), nullable=False)
+    id:            Mapped[str]          = mapped_column(String,  primary_key=True, default=lambda: str(uuid.uuid4()))
+    name:          Mapped[str]          = mapped_column(String,  unique=True, nullable=False, index=True)
+    description:   Mapped[str | None]   = mapped_column(String,  nullable=True)
+    # "public" | "private"
+    type:          Mapped[str]          = mapped_column(String,  nullable=False, default="public")
+    owner_id:      Mapped[str | None]   = mapped_column(String,  ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_active:     Mapped[bool]         = mapped_column(Boolean, nullable=False, default=True)
+    created_at:    Mapped[datetime]     = mapped_column(DateTime(timezone=True), nullable=False)
+    # Minimum monthly contribution (in base currency units) required to join
+    monthly_con:   Mapped[int]          = mapped_column(Integer, nullable=False, default=1000)
 
-    memberships = relationship("UserGroup",    back_populates="group", cascade="all, delete-orphan")
-    requests    = relationship("GroupRequest", back_populates="group", cascade="all, delete-orphan")
-
-    monthly_con = Column(Integer, nullable=False, default=1000)
+    memberships:   Mapped[list["UserGroup"]]    = relationship("UserGroup",    back_populates="group", cascade="all, delete-orphan")
+    requests:      Mapped[list["GroupRequest"]] = relationship("GroupRequest", back_populates="group", cascade="all, delete-orphan")
 
 
 class UserGroup(Base):
     __tablename__ = "user_groups"
 
-    user_id   = Column(String, ForeignKey("users.id",  ondelete="CASCADE"), primary_key=True)
-    group_id  = Column(String, ForeignKey("groups.id", ondelete="CASCADE"), primary_key=True)
-    role      = Column(String, nullable=False, default="member")  # "member" | "admin"
-    joined_at = Column(DateTime(timezone=True), nullable=False)
+    user_id:   Mapped[str]      = mapped_column(String, ForeignKey("users.id",  ondelete="CASCADE"), primary_key=True)
+    group_id:  Mapped[str]      = mapped_column(String, ForeignKey("groups.id", ondelete="CASCADE"), primary_key=True)
+    # "member" | "admin"
+    role:      Mapped[str]      = mapped_column(String, nullable=False, default="member")
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    group = relationship("Group", back_populates="memberships")
+    group: Mapped["Group"] = relationship("Group", back_populates="memberships")
 
 
 class GroupRequest(Base):
     __tablename__ = "group_requests"
 
-    id           = Column(String,  primary_key=True)
-    group_id     = Column(String,  ForeignKey("groups.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id      = Column(String,  ForeignKey("users.id",  ondelete="CASCADE"), nullable=False, index=True)
-    initiated_by = Column(String,  ForeignKey("users.id",  ondelete="CASCADE"), nullable=False)
-    direction    = Column(String,  nullable=False)   # "join_request" | "invite"
-    status       = Column(String,  nullable=False, default="pending")  # "pending" | "approved" | "rejected" | "accepted" | "declined"
-    created_at   = Column(DateTime(timezone=True), nullable=False)
-    resolved_at  = Column(DateTime(timezone=True), nullable=True)
+    id:           Mapped[str]          = mapped_column(String,  primary_key=True, default=lambda: str(uuid.uuid4()))
+    group_id:     Mapped[str]          = mapped_column(String,  ForeignKey("groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id:      Mapped[str]          = mapped_column(String,  ForeignKey("users.id",  ondelete="CASCADE"), nullable=False, index=True)
+    initiated_by: Mapped[str]          = mapped_column(String,  ForeignKey("users.id",  ondelete="CASCADE"), nullable=False)
+    # "join_request" | "invite"
+    direction:    Mapped[str]          = mapped_column(String,  nullable=False)
+    # "pending" | "approved" | "rejected" | "accepted" | "declined"
+    status:       Mapped[str]          = mapped_column(String,  nullable=False, default="pending")
+    created_at:   Mapped[datetime]     = mapped_column(DateTime(timezone=True), nullable=False)
+    resolved_at:  Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    group = relationship("Group", back_populates="requests")
+    group: Mapped["Group"] = relationship("Group", back_populates="requests")
 
     __table_args__ = (
         UniqueConstraint("group_id", "user_id", name="uq_group_request_pair"),
