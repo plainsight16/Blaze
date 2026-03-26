@@ -1,3 +1,8 @@
+"""
+Auth routes — purely HTTP plumbing.
+Every route does exactly: validate input → call service → return schema.
+No business logic lives here.
+"""
 import uuid
 from datetime import datetime, timezone
 
@@ -33,21 +38,20 @@ from app.utils.security import create_access_token, hash_password, verify_passwo
 router = APIRouter()
 
 
-# -- Signup ----------------------------------------------------
+# ── Signup ────────────────────────────────────────────────────────────────────
 
 @router.post("/signup", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def signup(
     data: SignupRequest,
-    bg: BackgroundTasks,
-    db: Session = Depends(get_db),
+    bg:   BackgroundTasks,
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
-    if db.query(User).filter(User.email == data.email).first():
+    if db.query(User).filter(User.email    == data.email).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered.")
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Username already taken.")
 
     user = User(
-        id            = str(uuid.uuid4()),
         email         = data.email,
         username      = data.username,
         first_name    = data.first_name,
@@ -59,6 +63,7 @@ def signup(
     )
     db.add(user)
     db.commit()
+    db.refresh(user)
 
     enforce_rate_limit(user.id, OTPPurpose.email_verification, db)
     otp = create_and_store_otp(user.id, OTPPurpose.email_verification, db)
@@ -67,18 +72,19 @@ def signup(
     return MessageResponse(message="Account created. Check your email for a verification code.")
 
 
-# -- Verify email ----------------------------------------------
+# ── Verify OTP ────────────────────────────────────────────────────────────────
 
 @router.post("/verify-otp", response_model=MessageResponse)
 def verify_otp(
     data: VerifyOTPRequest,
-    db: Session = Depends(get_db),
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
-    user = _get_user_by_email(data.email, db)
-    if user.verified_at:
+    user    = _get_user_by_email(data.email, db)
+    purpose = _parse_purpose(data.purpose)
+
+    if purpose == OTPPurpose.email_verification and user.verified_at:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Account already verified.")
 
-    purpose = _parse_purpose(data.purpose)
     consume_otp(user.id, purpose, data.otp, db)
 
     if purpose == OTPPurpose.email_verification:
@@ -88,15 +94,15 @@ def verify_otp(
     return MessageResponse(message="Account verified.")
 
 
-# -- Resend OTP ------------------------------------------------
+# ── Resend OTP ────────────────────────────────────────────────────────────────
 
 @router.post("/resend-otp", response_model=MessageResponse)
 def resend_otp(
     data: ResendOTPRequest,
-    bg: BackgroundTasks,
-    db: Session = Depends(get_db),
+    bg:   BackgroundTasks,
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
-    user = _get_user_by_email(data.email, db)
+    user    = _get_user_by_email(data.email, db)
     purpose = _parse_purpose(data.purpose)
 
     if purpose == OTPPurpose.email_verification and user.verified_at:
@@ -113,12 +119,12 @@ def resend_otp(
     return MessageResponse(message="Code sent.")
 
 
-# -- Login -----------------------------------------------------
+# ── Login ─────────────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
 def login(
     data: LoginRequest,
-    db: Session = Depends(get_db),
+    db:   Session = Depends(get_db),
 ) -> TokenResponse:
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
@@ -133,24 +139,23 @@ def login(
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-# -- Refresh ---------------------------------------------------
+# ── Refresh ───────────────────────────────────────────────────────────────────
 
 @router.post("/refresh", response_model=AccessTokenResponse)
 def refresh(
     data: RefreshRequest,
-    db: Session = Depends(get_db),
+    db:   Session = Depends(get_db),
 ) -> AccessTokenResponse:
-    new_refresh, user_id = rotate_refresh_token(data.refresh_token, db)
-    access = create_access_token(user_id)
-    return AccessTokenResponse(access_token=access)
+    _, user_id = rotate_refresh_token(data.refresh_token, db)
+    return AccessTokenResponse(access_token=create_access_token(user_id))
 
 
-# -- Logout ----------------------------------------------------
+# ── Logout ────────────────────────────────────────────────────────────────────
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(
     data: LogoutRequest,
-    db: Session = Depends(get_db),
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
     revoke_refresh_token(data.refresh_token, db)
     return MessageResponse(message="Logged out.")
@@ -158,30 +163,30 @@ def logout(
 
 @router.post("/logout-all", response_model=MessageResponse)
 def logout_all(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+    db:           Session = Depends(get_db),
 ) -> MessageResponse:
     revoke_all_refresh_tokens(current_user.id, db)
     return MessageResponse(message="Logged out of all devices.")
 
 
-# -- Password reset --------------------------------------------
+# ── Password reset ────────────────────────────────────────────────────────────
 
 @router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(
     data: ForgotPasswordRequest,
-    bg: BackgroundTasks,
-    db: Session = Depends(get_db),
+    bg:   BackgroundTasks,
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
     user = db.query(User).filter(User.email == data.email).first()
-    # Always return 200 — don't reveal whether the email exists
+    # Always return 200 — never reveal whether the email exists
     if user and user.is_active:
         try:
             enforce_rate_limit(user.id, OTPPurpose.password_reset, db)
             otp = create_and_store_otp(user.id, OTPPurpose.password_reset, db)
             bg.add_task(send_password_reset_email, data.email, otp)
         except HTTPException:
-            pass  # rate limit hit — still return 200
+            pass  # swallow rate-limit error; still return 200
 
     return MessageResponse(message="If that email is registered, a reset code has been sent.")
 
@@ -189,7 +194,7 @@ def forgot_password(
 @router.post("/reset-password", response_model=MessageResponse)
 def reset_password(
     data: ResetPasswordRequest,
-    db: Session = Depends(get_db),
+    db:   Session = Depends(get_db),
 ) -> MessageResponse:
     user = _get_user_by_email(data.email, db)
     consume_otp(user.id, OTPPurpose.password_reset, data.otp, db)
@@ -197,13 +202,11 @@ def reset_password(
     user.password_hash = hash_password(data.password)
     db.commit()
 
-    # Invalidate all sessions after password change
-    revoke_all_refresh_tokens(user.id, db)
-
+    revoke_all_refresh_tokens(user.id, db)  # invalidate all sessions on password change
     return MessageResponse(message="Password updated. Please log in again.")
 
 
-# -- Helpers ---------------------------------------------------
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_user_by_email(email: str, db: Session) -> User:
     user = db.query(User).filter(User.email == email).first()
@@ -216,4 +219,4 @@ def _parse_purpose(raw: str) -> OTPPurpose:
     try:
         return OTPPurpose(raw)
     except ValueError:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid purpose: {raw!r}")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid OTP purpose: {raw!r}.")

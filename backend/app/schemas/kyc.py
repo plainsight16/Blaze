@@ -1,43 +1,44 @@
-from pydantic import BaseModel, Field
-from typing import List
+from datetime import datetime
+from typing import Any
 
+from pydantic import BaseModel, Field
+
+
+# ── KYC ───────────────────────────────────────────────────────────────────────
 
 class KYCRequest(BaseModel):
-    bvn: str = Field(..., min_length=11, max_length=11)
+    bvn: str = Field(..., min_length=11, max_length=11, pattern=r"^\d{11}$")
 
+
+class KYCStatusResponse(BaseModel):
+    kyc_id: str
+    status: str   # "pending" | "verified" | "failed"
+
+
+# ── Bank Statement ────────────────────────────────────────────────────────────
 
 class MonthOnMonth(BaseModel):
-    phone: str
-    totalDebit: float
-    debitCount: float
-    totalCredit: float
-    creditCount: float
-    yearMonth: str
+    """Single month row — stored in raw_data JSONB, never queried by column."""
+    totalDebit:     float
+    debitCount:     float
+    totalCredit:    float
+    creditCount:    float
+    yearMonth:      str
     averageBalance: float
 
 
-class AverageValue(BaseModel):
-    totalDebit: float
-    debitCount: float
-    totalCredit: float
-    creditCount: float
-    averageBalance: float
+class BankStatementResponse(BaseModel):
+    """
+    Reflects the actual model columns.
+    Aggregates are real typed fields; month rows come back from raw_data.
+    """
+    id:              str
+    user_id:         str
+    average_balance: float
+    total_credit:    float
+    total_debit:     float
+    raw_data:        list[MonthOnMonth]
+    generated_at:    datetime
+    updated_at:      datetime
 
-
-class BankStatement(BaseModel):
-    monthOnMonth: List[MonthOnMonth]
-    averageValue: AverageValue
-
-
-class KYCResponseData(BaseModel):
-    bvn: str
-    firstName: str
-    lastName: str
-    phone: str
-    bankStatement: BankStatement
-
-
-class KYCResponse(BaseModel):
-    responseCode: str
-    responseMessage: str
-    data: KYCResponseData
+    model_config = {"from_attributes": True}
