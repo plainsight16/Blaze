@@ -1,1 +1,1 @@
-from app.models import user, refresh_token, otp, group, wallet  # noqa: F401
+from app.models import user, refresh_token, otp, group  # noqa: F401
