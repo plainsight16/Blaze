@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../auth_validators.dart';
-import '../data/mock_auth_api.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import 'login_screen.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
-  const SetNewPasswordScreen({super.key, required this.identifier});
+  const SetNewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
 
-  final String identifier;
+  final String email;
+  final String otp;
 
   @override
   State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
@@ -36,20 +42,22 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.setNewPassword(
+      await authHttpApi.resetPassword(
+        email: widget.email,
+        otp: widget.otp,
         password: _newPasswordController.text,
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated (mock).')),
+        const SnackBar(content: Text('Password updated. Please log in again.')),
       );
       await Navigator.pushAndRemoveUntil<void>(
         context,
         MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
         (_) => false,
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
@@ -182,7 +190,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'We will use this password for future sign-ins (mock).',
+                        'You can now sign in with your new password.',
                         style: AppTypography.bodySm(cs.onSurfaceVariant),
                       ),
                     ],

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../auth_validators.dart';
-import '../data/mock_auth_api.dart';
 import 'reset_password_otp_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -31,7 +32,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _submitting = true);
     try {
       final identifier = _identifierController.text.trim();
-      await mockAuthApi.requestPasswordReset(identifier: identifier);
+      if (!identifier.contains('@')) {
+        throw ApiException('Only email password reset is supported yet.');
+      }
+
+      await authHttpApi.forgotPassword(email: identifier);
 
       if (!mounted) return;
       final mask = _maskedIdentifier(identifier);
@@ -44,7 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),

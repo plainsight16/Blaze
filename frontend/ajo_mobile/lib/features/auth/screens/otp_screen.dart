@@ -3,14 +3,22 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
-import '../data/mock_auth_api.dart';
 import 'otp_result_screen.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key, this.contactMask});
+  const OtpScreen({
+    super.key,
+    required this.email,
+    required this.purpose,
+    this.contactMask,
+  });
 
   /// Shown in the subtitle, e.g. masked phone or email.
   final String? contactMask;
+  final String email;
+  final String purpose;
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -75,21 +83,35 @@ class _OtpScreenState extends State<OtpScreen>
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.verifyOtp(code);
+      await authHttpApi.verifyOtp(
+        email: widget.email,
+        otp: code,
+        purpose: widget.purpose,
+      );
       if (!mounted) return;
       await Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => const OtpResultScreen(success: true),
+          builder: (_) => OtpResultScreen(
+            success: true,
+            email: widget.email,
+            purpose: widget.purpose,
+            contactMask: widget.contactMask,
+          ),
         ),
       );
-    } on MockAuthException catch (_) {
+    } on ApiException catch (_) {
       await _playShake();
       if (!mounted) return;
       await Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => const OtpResultScreen(success: false),
+          builder: (_) => OtpResultScreen(
+            success: false,
+            email: widget.email,
+            purpose: widget.purpose,
+            contactMask: widget.contactMask,
+          ),
         ),
       );
     } finally {
@@ -101,12 +123,15 @@ class _OtpScreenState extends State<OtpScreen>
     if (_resending) return;
     setState(() => _resending = true);
     try {
-      await mockAuthApi.requestOtpResend();
+      await authHttpApi.resendOtp(
+        email: widget.email,
+        purpose: widget.purpose,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('A new code has been sent (mock).')),
+        const SnackBar(content: Text('A new code has been sent.')),
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
@@ -296,9 +321,9 @@ class _OtpBox extends StatelessWidget {
         focusNode: focusNode,
         onChanged: onChanged,
         textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
+        keyboardType: TextInputType.text,
         maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]'))],
         style: AppTypography.headlineSm(cs.onSurface)
             .copyWith(fontWeight: FontWeight.w700),
         decoration: InputDecoration(
