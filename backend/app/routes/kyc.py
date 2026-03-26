@@ -49,13 +49,20 @@ def verify_kyc(
     cur_user: User = Depends(get_current_user),
 ) -> KYCVerificationResponse:
     try:
-        kyc = verify_bvn(db, cur_user, payload.bvn)
+        kyc, wallet = verify_bvn(db, cur_user, payload.bvn)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except InterswitchError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
-    return KYCVerificationResponse(kyc_id=kyc.id, status=kyc.status)
+    return KYCVerificationResponse(
+        kyc_id=kyc.id,
+        wallet_id=wallet.id,
+        status=kyc.status,
+        wallet_provisioned=wallet.is_active,
+        wallet_status=wallet.status,
+        next_step="completed" if wallet.is_active else "retry_wallet_provisioning",
+    )
 
 
 @router.post("/verify", response_model=KYCVerificationResponse, status_code=status.HTTP_201_CREATED)

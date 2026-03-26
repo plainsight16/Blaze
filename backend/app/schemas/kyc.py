@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from app.schemas.wallet import OnboardingNextStep, WalletStatus
 
 
 class KYCRequest(BaseModel):
@@ -11,23 +12,32 @@ class KYCRequest(BaseModel):
 class KYCRequirementsResponse(BaseModel):
     bvn_required: bool
     bvn_verified: bool
-    next_step: Literal["verify_bvn", "completed"]
+    wallet_required: bool
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
     banner_title: str | None = None
     banner_message: str | None = None
 
 
 class KYCStatusResponse(BaseModel):
     kyc_id: str | None
-    status: str   # "not_started" | "verified"
+    wallet_id: str | None
+    status: str
     bvn_verified: bool
-    next_step: Literal["verify_bvn", "completed"]
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
 
 
 class KYCVerificationResponse(BaseModel):
     kyc_id: str
+    wallet_id: str | None
     status: str
     bvn_verified: bool = True
-    next_step: Literal["completed"] = "completed"
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
 
 
 class MonthOnMonth(BaseModel):

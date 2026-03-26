@@ -16,7 +16,11 @@ for key, value in {
     os.environ.setdefault(key, value)
 
 
-from app.services.interswitch import _extract_access_token, _extract_boolean_match  # noqa: E402
+from app.services.interswitch import (  # noqa: E402
+    _extract_access_token,
+    _extract_boolean_match,
+    _extract_virtual_account,
+)
 
 
 class InterswitchServiceTests(unittest.TestCase):
@@ -59,6 +63,23 @@ class InterswitchServiceTests(unittest.TestCase):
             },
         }
         self.assertTrue(_extract_boolean_match(payload))
+
+    def test_extract_virtual_account_supports_live_interswitch_shape(self) -> None:
+        payload = {
+            "id": 404102,
+            "merchantCode": "MX276203",
+            "payableCode": "VIRTUAL_ACCOUNTMX2762031774566874219",
+            "accountName": "Codex Smoke be0bb15a",
+            "accountNumber": "7620601622",
+            "payableExpressionId": 404102,
+            "bankName": "Wema Bank",
+            "bankCode": "WEMA",
+        }
+        account = _extract_virtual_account(payload)
+        self.assertEqual(account.provider_wallet_id, "404102")
+        self.assertEqual(account.provider_reference, "VIRTUAL_ACCOUNTMX2762031774566874219")
+        self.assertEqual(account.account_number, "7620601622")
+        self.assertEqual(account.bank_code, "WEMA")
 
 
 if __name__ == "__main__":

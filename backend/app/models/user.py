@@ -22,4 +22,5 @@ class User(Base):
 
     # Relationships (back-populated from child tables)
     kyc:           Mapped["KYC | None"]           = relationship("KYC",          back_populates="user", uselist=False)
+    wallet:        Mapped["Wallet | None"]        = relationship("Wallet",       back_populates="user", uselist=False)
     bank_statement: Mapped["BankStatement | None"] = relationship("BankStatement", back_populates="user", uselist=False)
