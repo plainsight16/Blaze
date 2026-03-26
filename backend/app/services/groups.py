@@ -1,15 +1,31 @@
+"""
+Group service layer.
+
+All DB access and business-rule enforcement lives here.
+Routes are thin: they call one service function, get back a value, return it.
+
+Key rules encoded here:
+  - Only public groups accept join requests; private groups require an invite.
+  - A user must have verified KYC + a bank statement with sufficient average
+    balance to request joining any group.
+  - Group owners cannot leave; they must transfer ownership or delete.
+  - Admins cannot remove themselves via the remove-member endpoint (use /leave).
+  - One pending request/invite per (user, group) pair at a time (DB unique constraint
+    + service-layer guard).
+"""
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.models.bank_statement import BankStatement
 from app.models.group import Group, GroupRequest, UserGroup
-from app.models.user import User
 from app.models.kyc import KYC
+from app.models.user import User
 
 
-# -- Internal helpers ------------------------------------------
+# ── Private helpers ───────────────────────────────────────────────────────────
 
 def _get_group_or_404(group_id: str, db: Session) -> Group:
     group = db.query(Group).filter(
@@ -41,14 +57,17 @@ def _require_admin(user_id: str, group_id: str, db: Session) -> None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin access required.")
 
 
-def _resolve_target_user(email: str | None, username: str | None, db: Session) -> User:
+def _resolve_target_user(
+    email: str | None,
+    username: str | None,
+    db: Session,
+) -> User:
     if not email and not username:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Provide either email or username.")
-    query = db.query(User)
-    if email:
-        user = query.filter(User.email == email).first()
-    else:
-        user = query.filter(User.username == username).first()
+    user = (
+        db.query(User).filter(User.email    == email).first()    if email
+        else db.query(User).filter(User.username == username).first()
+    )
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
     if not user.is_active:
@@ -63,47 +82,50 @@ def _get_pending_request(user_id: str, group_id: str, db: Session) -> GroupReque
         GroupRequest.status   == "pending",
     ).first()
 
-def _get_user_eligibility(user_id: str, monthly_con: int, db: Session) -> bool:
+
+def _assert_user_eligible(user_id: str, monthly_con: int, db: Session) -> None:
     """
-    Return True if the user's KYC bank-statement qualifies them for the group.
- 
-    Raises HTTP 402 / 403 with a clear message instead of crashing when KYC
-    data is missing or incomplete.
- 
-    Eligibility rule: (averageBalance / 3) >= monthly_con
+    Raise HTTP 403 with a precise reason if the user does not meet the group's
+    monthly-contribution threshold.
+
+    Eligibility rule:  (averageBalance / 3) >= monthly_con
     """
-    kyc_row = db.query(KYC).filter(KYC.user_id == user_id).first()
- 
-    if not kyc_row:
+    kyc = db.query(KYC).filter(KYC.user_id == user_id).first()
+    if not kyc:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "KYC record not found. Please complete BVN verification first.",
+            "KYC not found. Complete BVN verification before joining a group.",
         )
- 
-    if kyc_row.verified != "true":
+    if not kyc.is_verified:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "KYC not yet verified. Please complete verification before joining a group.",
+            "KYC not verified. Complete verification before joining a group.",
         )
- 
-    if not kyc_row.bank_statement:
+
+    statement = db.query(BankStatement).filter(BankStatement.user_id == user_id).first()
+    if not statement:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "Bank statement not generated yet. Please generate your statement first.",
+            "No bank statement found. Generate your statement before joining a group.",
         )
- 
+
     try:
-        avg_balance = kyc_row.bank_statement["averageValue"]["averageBalance"]
+        avg_balance: float = statement.data["averageValue"]["averageBalance"]
     except (KeyError, TypeError):
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "Bank statement data is malformed. Please regenerate your statement.",
         )
- 
-    return (avg_balance / 3) >= monthly_con
 
-def _approve_into_group(user_id: str, group_id: str, db: Session) -> None:
-    """Create a UserGroup row — shared by approve and accept paths."""
+    if (avg_balance / 3) < monthly_con:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            f"Insufficient average balance. Required: ₦{monthly_con * 3:,.2f} average balance.",
+        )
+
+
+def _add_member(user_id: str, group_id: str, db: Session) -> None:
+    """Create a UserGroup membership row (shared by approve + accept paths)."""
     db.add(UserGroup(
         user_id   = user_id,
         group_id  = group_id,
@@ -112,27 +134,32 @@ def _approve_into_group(user_id: str, group_id: str, db: Session) -> None:
     ))
 
 
-# -- Group CRUD ------------------------------------------------
+# ── Group CRUD ────────────────────────────────────────────────────────────────
 
-def create_group(name: str, description: str | None, type_: str, owner: User, db: Session) -> Group:
-    if type_ not in ("public", "private"):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Type must be 'public' or 'private'.")
+def create_group(
+    name:        str,
+    description: str | None,
+    type_:       str,
+    monthly_con: int,
+    owner:       User,
+    db:          Session,
+) -> Group:
     if db.query(Group).filter(Group.name == name).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Group name already taken.")
 
     group = Group(
-        id          = str(uuid.uuid4()),
         name        = name,
         description = description,
         type        = type_,
+        monthly_con = monthly_con,
         owner_id    = owner.id,
         is_active   = True,
         created_at  = datetime.now(timezone.utc),
     )
     db.add(group)
-    db.flush()
+    db.flush()  # get group.id before adding membership
 
-    # Owner automatically becomes an admin member
+    # Owner is automatically an admin member
     db.add(UserGroup(
         user_id   = owner.id,
         group_id  = group.id,
@@ -140,11 +167,12 @@ def create_group(name: str, description: str | None, type_: str, owner: User, db
         joined_at = datetime.now(timezone.utc),
     ))
     db.commit()
+    db.refresh(group)
     return group
 
 
 def search_groups(query: str, db: Session) -> list[Group]:
-    """Search public active groups by name (case-insensitive substring)."""
+    """Case-insensitive substring search over active public groups."""
     return (
         db.query(Group)
         .filter(
@@ -161,12 +189,12 @@ def search_groups(query: str, db: Session) -> list[Group]:
 def delete_group(actor: User, group_id: str, db: Session) -> None:
     group = _get_group_or_404(group_id, db)
     if group.owner_id != actor.id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the owner can delete the group.")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the group owner can delete it.")
     group.is_active = False
     db.commit()
 
 
-# -- Membership ------------------------------------------------
+# ── Membership ────────────────────────────────────────────────────────────────
 
 def list_my_groups(user: User, db: Session) -> list[dict]:
     rows = (
@@ -212,9 +240,13 @@ def list_members(actor: User, group_id: str, db: Session) -> list[dict]:
     ]
 
 
-def update_member_role(actor: User, group_id: str, target_user_id: str, role: str, db: Session) -> None:
-    if role not in ("member", "admin"):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Role must be 'member' or 'admin'.")
+def update_member_role(
+    actor:          User,
+    group_id:       str,
+    target_user_id: str,
+    role:           str,
+    db:             Session,
+) -> None:
     _get_group_or_404(group_id, db)
     _require_admin(actor.id, group_id, db)
 
@@ -231,7 +263,10 @@ def remove_member(actor: User, group_id: str, target_user_id: str, db: Session) 
     _require_admin(actor.id, group_id, db)
 
     if target_user_id == actor.id:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Use /leave to remove yourself.")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Use the /leave endpoint to remove yourself from a group.",
+        )
 
     membership = _get_membership(target_user_id, group_id, db)
     if not membership:
@@ -242,45 +277,38 @@ def remove_member(actor: User, group_id: str, target_user_id: str, db: Session) 
 
 
 def leave_group(actor: User, group_id: str, db: Session) -> None:
-    group = _get_group_or_404(group_id, db)
+    group      = _get_group_or_404(group_id, db)
     membership = _require_membership(actor.id, group_id, db)
 
     if group.owner_id == actor.id:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Owner cannot leave. Transfer ownership or delete the group.",
+            "Group owner cannot leave. Transfer ownership or delete the group first.",
         )
 
     db.delete(membership)
     db.commit()
 
 
-# -- Join requests (user → group) ------------------------------
+# ── Join requests (user → group) ──────────────────────────────────────────────
 
 def request_to_join(actor: User, group_id: str, db: Session) -> GroupRequest:
     group = _get_group_or_404(group_id, db)
- 
+
     if group.type == "private":
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "This group is private. You need an invite.",
+            "This group is private. You need an invite to join.",
         )
- 
     if _get_membership(actor.id, group_id, db):
-        raise HTTPException(status.HTTP_409_CONFLICT, "Already a member.")
- 
+        raise HTTPException(status.HTTP_409_CONFLICT, "You are already a member.")
     if _get_pending_request(actor.id, group_id, db):
         raise HTTPException(status.HTTP_409_CONFLICT, "You already have a pending request.")
-    
-    if not _get_user_eligibility(actor.id, group.monthly_con, db):
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            "You are not eligible to join this group. "
-            "Your average balance does not meet the monthly contribution requirement.",
-        )
- 
+
+    # Eligibility check — fetches KYC + BankStatement from DB using actor.id
+    _assert_user_eligible(actor.id, group.monthly_con, db)
+
     req = GroupRequest(
-        id           = str(uuid.uuid4()),
         group_id     = group_id,
         user_id      = actor.id,
         initiated_by = actor.id,
@@ -290,6 +318,7 @@ def request_to_join(actor: User, group_id: str, db: Session) -> GroupRequest:
     )
     db.add(req)
     db.commit()
+    db.refresh(req)
     return req
 
 
@@ -298,18 +327,17 @@ def approve_request(actor: User, group_id: str, request_id: str, db: Session) ->
     _require_admin(actor.id, group_id, db)
 
     req = db.query(GroupRequest).filter(
-        GroupRequest.id       == request_id,
-        GroupRequest.group_id == group_id,
+        GroupRequest.id        == request_id,
+        GroupRequest.group_id  == group_id,
         GroupRequest.direction == "join_request",
         GroupRequest.status    == "pending",
     ).first()
     if not req:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Request not found.")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Join request not found.")
 
     req.status      = "approved"
     req.resolved_at = datetime.now(timezone.utc)
-    _approve_into_group(req.user_id, group_id, db)
-    db.delete(req)
+    _add_member(req.user_id, group_id, db)
     db.commit()
 
 
@@ -324,7 +352,7 @@ def reject_request(actor: User, group_id: str, request_id: str, db: Session) -> 
         GroupRequest.status    == "pending",
     ).first()
     if not req:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Request not found.")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Join request not found.")
 
     req.status      = "rejected"
     req.resolved_at = datetime.now(timezone.utc)
@@ -361,9 +389,15 @@ def list_join_requests(actor: User, group_id: str, db: Session) -> list[dict]:
     ]
 
 
-# -- Invites (admin → user) ------------------------------------
+# ── Invites (admin → user) ────────────────────────────────────────────────────
 
-def invite_user(actor: User, group_id: str, email: str | None, username: str | None, db: Session) -> GroupRequest:
+def invite_user(
+    actor:    User,
+    group_id: str,
+    email:    str | None,
+    username: str | None,
+    db:       Session,
+) -> GroupRequest:
     _get_group_or_404(group_id, db)
     _require_admin(actor.id, group_id, db)
 
@@ -371,12 +405,10 @@ def invite_user(actor: User, group_id: str, email: str | None, username: str | N
 
     if _get_membership(target.id, group_id, db):
         raise HTTPException(status.HTTP_409_CONFLICT, "User is already a member.")
-
     if _get_pending_request(target.id, group_id, db):
         raise HTTPException(status.HTTP_409_CONFLICT, "User already has a pending request or invite.")
 
     req = GroupRequest(
-        id           = str(uuid.uuid4()),
         group_id     = group_id,
         user_id      = target.id,
         initiated_by = actor.id,
@@ -386,6 +418,7 @@ def invite_user(actor: User, group_id: str, email: str | None, username: str | N
     )
     db.add(req)
     db.commit()
+    db.refresh(req)
     return req
 
 
@@ -399,12 +432,11 @@ def accept_invite(actor: User, request_id: str, db: Session) -> None:
     if not req:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Invite not found.")
 
-    _get_group_or_404(req.group_id, db)  # ensure group still active
+    _get_group_or_404(req.group_id, db)  # ensure group is still active
 
     req.status      = "accepted"
     req.resolved_at = datetime.now(timezone.utc)
-    _approve_into_group(actor.id, req.group_id, db)
-    db.delete(req)
+    _add_member(actor.id, req.group_id, db)
     db.commit()
 
 

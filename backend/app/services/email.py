@@ -1,3 +1,7 @@
+"""
+Thin SMTP wrapper.  All email sending goes through _send(); callers never
+touch smtplib directly.  Each public function owns exactly one email template.
+"""
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -11,7 +15,8 @@ def _send(to: str, subject: str, body_text: str, body_html: str) -> None:
     msg["From"]    = SMTP_USER
     msg["To"]      = to
     msg.attach(MIMEText(body_text, "plain"))
-    msg.attach(MIMEText(body_html, "html"))
+    msg.attach(MIMEText(body_html,  "html"))
+
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
         server.starttls()
         server.login(SMTP_USER, SMTP_PASS)
@@ -23,11 +28,11 @@ def send_verification_email(to: str, otp: str) -> None:
         to,
         subject   = "Verify your account",
         body_text = f"Your verification code is: {otp}\n\nExpires in 5 minutes.",
-        body_html = f"""
-        <p>Your verification code is:</p>
-        <h2 style="letter-spacing:4px">{otp}</h2>
-        <p>Expires in 5 minutes. If you didn't request this, ignore this email.</p>
-        """,
+        body_html = (
+            f"<p>Your verification code is:</p>"
+            f"<h2 style='letter-spacing:4px'>{otp}</h2>"
+            f"<p>Expires in 5 minutes. If you didn't request this, ignore this email.</p>"
+        ),
     )
 
 
@@ -36,9 +41,9 @@ def send_password_reset_email(to: str, otp: str) -> None:
         to,
         subject   = "Reset your password",
         body_text = f"Your password reset code is: {otp}\n\nExpires in 5 minutes.",
-        body_html = f"""
-        <p>Your password reset code is:</p>
-        <h2 style="letter-spacing:4px">{otp}</h2>
-        <p>Expires in 5 minutes. If you didn't request this, ignore this email.</p>
-        """,
+        body_html = (
+            f"<p>Your password reset code is:</p>"
+            f"<h2 style='letter-spacing:4px'>{otp}</h2>"
+            f"<p>Expires in 5 minutes. If you didn't request this, ignore this email.</p>"
+        ),
     )
