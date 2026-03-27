@@ -2,7 +2,7 @@
 SQLAlchemy engine + session factory.
 
 Supabase notes
-──────────────
+--------------
 - Use the *Transaction* pooler URI (port 6543) for serverless / short-lived
   connections.  Set pool_pre_ping=True so stale connections are detected and
   recycled automatically.

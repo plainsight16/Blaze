@@ -33,7 +33,7 @@ class AjoNavBar extends StatelessWidget {
     return _fourTabBar(context, cs);
   }
 
-  // ── 4-tab layout (with optional FAB notch) ──────────────────────────────────
+  // -- 4-tab layout (with optional FAB notch) ----------------------------------
   Widget _fourTabBar(BuildContext context, ColorScheme cs) {
     return BottomAppBar(
       color: cs.surfaceContainerLowest,
@@ -75,7 +75,7 @@ class AjoNavBar extends StatelessWidget {
     );
   }
 
-  // ── 5-tab layout (Messages screen) ──────────────────────────────────────────
+  // -- 5-tab layout (Messages screen) ------------------------------------------
   Widget _fiveTabBar(BuildContext context, ColorScheme cs) {
     return Container(
       decoration: BoxDecoration(
@@ -134,7 +134,7 @@ class AjoNavBar extends StatelessWidget {
   }
 }
 
-// ─── Shared nav item ──────────────────────────────────────────────────────────
+// --- Shared nav item ----------------------------------------------------------
 
 class _Item extends StatelessWidget {
   const _Item({

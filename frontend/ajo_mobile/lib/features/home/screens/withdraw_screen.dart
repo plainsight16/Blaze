@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/theme.dart';
 import '../models/mock_user_profile.dart';
 
-// ─── Entry Point ──────────────────────────────────────────────────────────────
+// --- Entry Point --------------------------------------------------------------
 
 class WithdrawScreen extends StatefulWidget {
   const WithdrawScreen({super.key});
@@ -121,7 +121,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Available Balance Card ──
+            // -- Available Balance Card --
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -157,7 +157,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Destination Account ──
+            // -- Destination Account --
             Text('Destination Account',
                 style: AppTypography.titleSm(cs.onSurface)),
             const SizedBox(height: 10),
@@ -168,7 +168,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Amount Input ──
+            // -- Amount Input --
             Text('Amount to Withdraw',
                 style: AppTypography.titleSm(cs.onSurface)),
             const SizedBox(height: 10),
@@ -222,7 +222,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Transfer Details ──
+            // -- Transfer Details --
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
@@ -247,7 +247,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 32),
 
-            // ── Confirm Button ──
+            // -- Confirm Button --
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -273,7 +273,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }
 }
 
-// ─── Supporting Widgets ───────────────────────────────────────────────────────
+// --- Supporting Widgets -------------------------------------------------------
 
 class _BankAccount {
   const _BankAccount({required this.bankName, required this.last4});
@@ -390,7 +390,7 @@ class _TransferDetailRow extends StatelessWidget {
   }
 }
 
-// ─── Review Withdrawal Screen ─────────────────────────────────────────────────
+// --- Review Withdrawal Screen -------------------------------------------------
 
 class ReviewWithdrawalScreen extends StatefulWidget {
   const ReviewWithdrawalScreen({
@@ -449,7 +449,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Total to Receive hero card ──
+            // -- Total to Receive hero card --
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -483,7 +483,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── Withdrawal Amount ──
+            // -- Withdrawal Amount --
             _ReviewRow(
               label: 'WITHDRAWAL AMOUNT',
               value: _fmt(widget.amount),
@@ -491,7 +491,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Destination Bank ──
+            // -- Destination Bank --
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
@@ -524,7 +524,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Transaction Fee ──
+            // -- Transaction Fee --
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
@@ -565,7 +565,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Final Amount ──
+            // -- Final Amount --
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
@@ -603,7 +603,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── Acknowledgment ──
+            // -- Acknowledgment --
             GestureDetector(
               onTap: () =>
                   setState(() => _acknowledged = !_acknowledged),
@@ -643,7 +643,7 @@ class _ReviewWithdrawalScreenState extends State<ReviewWithdrawalScreen> {
             ),
             const SizedBox(height: 28),
 
-            // ── Confirm Button ──
+            // -- Confirm Button --
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -741,7 +741,7 @@ class _ReviewRow extends StatelessWidget {
   }
 }
 
-// ─── Withdrawal Initiated Screen ──────────────────────────────────────────────
+// --- Withdrawal Initiated Screen ----------------------------------------------
 
 class WithdrawalInitiatedScreen extends StatelessWidget {
   const WithdrawalInitiatedScreen({
@@ -794,7 +794,7 @@ class WithdrawalInitiatedScreen extends StatelessWidget {
           children: [
             const Spacer(),
 
-            // ── Success Icon ──
+            // -- Success Icon --
             Container(
               width: 100,
               height: 100,
@@ -827,7 +827,7 @@ class WithdrawalInitiatedScreen extends StatelessWidget {
             ),
             const Spacer(),
 
-            // ── Details Card ──
+            // -- Details Card --
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -882,7 +882,7 @@ class WithdrawalInitiatedScreen extends StatelessWidget {
             ),
             const Spacer(),
 
-            // ── Back to Wallet ──
+            // -- Back to Wallet --
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -902,7 +902,7 @@ class WithdrawalInitiatedScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── Download Receipt ──
+            // -- Download Receipt --
             TextButton(
               onPressed: () {
                 // TODO: implement download receipt

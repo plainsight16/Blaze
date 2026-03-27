@@ -10,29 +10,30 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import app.models  # noqa: F401
+
 from app.config import ALLOWED_ORIGINS
 from app.database import Base, engine
-from app.routes import auth, groups, home, kyc, wallet, user
+from app.routes import auth, groups, home, kyc, wallet, user, cycle
+from app.scheduler import start_scheduler
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# -- App -----------------------------------------------------------------------
+
+
+@asynccontextmanager
+def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    start_scheduler()
+
 
 app = FastAPI(
     title       = "Auth API",
     version     = "1.0.0",
     description = "Authentication, KYC, and group management API.",
+    lifespan=lifespan
 )
+    
 
-
-@app.on_event("startup")
-def ensure_schema() -> None:
-    """
-    Temporary stopgap until Alembic lands in the repo.
-    Ensures new tables such as wallets exist for manual testing.
-    """
-    Base.metadata.create_all(bind=engine)
-
-# ── CORS ──────────────────────────────────────────────────────────────────────
+# -- CORS ----------------------------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +43,7 @@ app.add_middleware(
     allow_headers     = ["*"],
 )
 
-# ── Global exception handlers ─────────────────────────────────────────────────
+# -- Global exception handlers -------------------------------------------------
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -57,7 +58,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         content     = {"detail": "An unexpected error occurred. Please try again later."},
     )
 
-# ── Routers ───────────────────────────────────────────────────────────────────
+# -- Routers -------------------------------------------------------------------
 
 app.include_router(home.router,   prefix="",   tags=["Docs"])
 app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
@@ -65,9 +66,10 @@ app.include_router(kyc.router,    prefix="/kyc",    tags=["KYC"])
 app.include_router(wallet.router, prefix="/wallet", tags=["Wallet"])
 app.include_router(groups.router, prefix="/groups", tags=["Groups"])
 app.include_router(user.router,   prefix="/user",   tags=["User"])
+app.include_router(cycle.router, tags=["Cycles"])
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# -- Health check --------------------------------------------------------------
 
 @app.get("/health", tags=["Health"], include_in_schema=False)
 def health() -> dict:

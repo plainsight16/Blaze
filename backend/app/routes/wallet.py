@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.schemas.wallet import WalletResponse
-from app.services.wallet import WalletProvisioningError, get_wallet_by_user_id, provision_user_wallet
+from app.schemas.wallet import WalletResponse, FundWalletRequest, TransactionResponse
+from app.services.wallet import WalletProvisioningError, get_wallet_by_user_id, provision_user_wallet, fund_wallet
 from app.utils.dependencies import get_current_user, get_db
 
 router = APIRouter()
@@ -36,3 +36,18 @@ def provision_wallet(
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
     return WalletResponse.model_validate(wallet)
+
+@router.post("/fund", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+def fund_wallet_route(
+    payload: FundWalletRequest,
+    db: Session = Depends(get_db),
+    cur_user: User = Depends(get_current_user),
+) -> TransactionResponse:
+    wallet = get_wallet_by_user_id(cur_user.id, db)
+    if not wallet:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Wallet not found.")
+    try:
+        tx = fund_wallet(db, wallet, payload.amount, payload.reference, payload.description)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return TransactionResponse.model_validate(tx)

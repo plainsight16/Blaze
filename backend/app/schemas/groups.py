@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
+from app.schemas.wallet import WalletResponse
 
 
-# ── Group ─────────────────────────────────────────────────────────────────────
+# -- Group ---------------------------------------------------------------------
 
 class GroupResponse(BaseModel):
     id:          uuid.UUID
@@ -15,6 +16,7 @@ class GroupResponse(BaseModel):
     is_active:   bool
     created_at:  datetime
     monthly_con: int
+    wallet: WalletResponse | None
 
     model_config = {"from_attributes": True}
 
@@ -29,7 +31,7 @@ class GroupSummaryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Membership ────────────────────────────────────────────────────────────────
+# -- Membership ----------------------------------------------------------------
 
 class MemberResponse(BaseModel):
     user_id:   uuid.UUID
@@ -47,7 +49,7 @@ class MyMembershipResponse(BaseModel):
     joined_at: datetime
 
 
-# ── Requests / Invites ────────────────────────────────────────────────────────
+# -- Requests / Invites --------------------------------------------------------
 
 class GroupRequestResponse(BaseModel):
     id:           uuid.UUID
@@ -69,7 +71,7 @@ class MyInviteResponse(BaseModel):
     created_at: datetime
 
 
-# ── Incoming payloads ─────────────────────────────────────────────────────────
+# -- Incoming payloads ---------------------------------------------------------
 
 class CreateGroupRequest(BaseModel):
     name:        str
