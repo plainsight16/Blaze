@@ -4,19 +4,60 @@ import '../../home/models/user_profile.dart';
 class KycRequirements {
   const KycRequirements({
     required this.nextStep,
+    required this.bvnVerified,
+    required this.walletProvisioned,
+    required this.walletStatus,
     required this.bannerTitle,
     required this.bannerMessage,
   });
 
   final String nextStep;
+  final bool bvnVerified;
+  final bool walletProvisioned;
+  final String walletStatus;
   final String? bannerTitle;
   final String? bannerMessage;
 
   factory KycRequirements.fromJson(Map<String, dynamic> json) {
     return KycRequirements(
       nextStep: json['next_step']?.toString() ?? 'verify_bvn',
+      bvnVerified: json['bvn_verified'] == true,
+      walletProvisioned: json['wallet_provisioned'] == true,
+      walletStatus: json['wallet_status']?.toString() ?? 'not_started',
       bannerTitle: json['banner_title']?.toString(),
       bannerMessage: json['banner_message']?.toString(),
+    );
+  }
+}
+
+class KycStatusSnapshot {
+  const KycStatusSnapshot({
+    this.kycId,
+    this.walletId,
+    required this.status,
+    required this.bvnVerified,
+    required this.walletProvisioned,
+    required this.walletStatus,
+    required this.nextStep,
+  });
+
+  final String? kycId;
+  final String? walletId;
+  final String status;
+  final bool bvnVerified;
+  final bool walletProvisioned;
+  final String walletStatus;
+  final String nextStep;
+
+  factory KycStatusSnapshot.fromJson(Map<String, dynamic> json) {
+    return KycStatusSnapshot(
+      kycId: json['kyc_id']?.toString(),
+      walletId: json['wallet_id']?.toString(),
+      status: json['status']?.toString() ?? 'not_started',
+      bvnVerified: json['bvn_verified'] == true,
+      walletProvisioned: json['wallet_provisioned'] == true,
+      walletStatus: json['wallet_status']?.toString() ?? 'not_started',
+      nextStep: json['next_step']?.toString() ?? 'verify_bvn',
     );
   }
 }
@@ -66,6 +107,14 @@ class ProfileHttpApi {
       throw ApiException('Invalid /kyc/requirements response', body: res);
     }
     return KycRequirements.fromJson(res);
+  }
+
+  Future<KycStatusSnapshot> getKycStatus() async {
+    final res = await client.getJson('/kyc/status');
+    if (res is! Map<String, dynamic>) {
+      throw ApiException('Invalid /kyc/status response', body: res);
+    }
+    return KycStatusSnapshot.fromJson(res);
   }
 
   Future<void> verifyBvn(String bvn) async {
