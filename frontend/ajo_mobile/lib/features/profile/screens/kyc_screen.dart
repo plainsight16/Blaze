@@ -2,9 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/api/api_repositories.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../../../core/widgets/ajo_nav_bar.dart';
+import '../data/profile_http_api.dart';
 
 class KycScreen extends StatefulWidget {
   const KycScreen({super.key});
@@ -14,8 +16,98 @@ class KycScreen extends StatefulWidget {
 }
 
 class _KycScreenState extends State<KycScreen> {
-  bool _bankUploaded = false;
-  bool _employmentUploaded = false;
+  final TextEditingController _bvnController = TextEditingController();
+  bool _loading = true;
+  bool _submitting = false;
+  String? _error;
+  KycRequirements? _requirements;
+  BankStatementSummary? _statement;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _bvnController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    try {
+      final requirements = await profileHttpApi.getKycRequirements();
+      BankStatementSummary? statement;
+      try {
+        statement = await profileHttpApi.getBankStatement();
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _requirements = requirements;
+        _statement = statement;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _verifyBvn() async {
+    if (_bvnController.text.trim().length != 11) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('BVN must be 11 digits')));
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      await profileHttpApi.verifyBvn(_bvnController.text.trim());
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _generateStatement() async {
+    setState(() => _submitting = true);
+    try {
+      final statement = await profileHttpApi.generateBankStatement();
+      if (!mounted) return;
+      setState(() => _statement = statement);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _provisionWallet() async {
+    setState(() => _submitting = true);
+    try {
+      await profileHttpApi.provisionWallet();
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  String get _nextStep => _requirements?.nextStep ?? 'verify_bvn';
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +119,7 @@ class _KycScreenState extends State<KycScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // -- App bar -------------------------------------------------
+            // ── App bar ─────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -49,79 +141,145 @@ class _KycScreenState extends State<KycScreen> {
               ),
             ),
 
-            // -- Content -------------------------------------------------
+            // ── Content ─────────────────────────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Complete your profile',
-                      style: AppTypography.headlineSm(cs.onSurface),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Please upload the following documents to verify your '
-                      'identity and increase your transaction limits.',
-                      style: AppTypography.bodyMd(cs.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // -- Bank Statements ------------------------------
-                    _SectionHeader(
-                      title: 'Bank Statements',
-                      badge: _RequiredBadge(required: true),
-                    ),
-                    const SizedBox(height: 12),
-
-                    _bankUploaded
-                        ? _UploadedFile(
-                            name: 'bank_statement.pdf',
-                            onRemove: () =>
-                                setState(() => _bankUploaded = false),
-                          )
-                        : _DropZone(
-                            onTap: () =>
-                                setState(() => _bankUploaded = true),
-                            subtitle: 'PDF, PNG, or JPG (max. 10MB)',
-                            hint: 'Provide at least 3 months of recent activity',
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _requirements?.bannerTitle ??
+                                'KYC and Wallet Setup',
+                            style: AppTypography.headlineSm(cs.onSurface),
                           ),
-                    const SizedBox(height: 24),
-
-                    // -- Employment Record ----------------------------
-                    _SectionHeader(
-                      title: 'Employment Record',
-                      badge: _RequiredBadge(required: false),
+                          const SizedBox(height: 8),
+                          Text(
+                            _requirements?.bannerMessage ??
+                                'Verify your BVN and complete wallet setup.',
+                            style: AppTypography.bodyMd(cs.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 28),
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(_error!,
+                                  style: AppTypography.bodySm(cs.error)),
+                            ),
+                          if (_nextStep == 'completed') ...[
+                            _KycCompletedCard(statement: _statement),
+                            const SizedBox(height: 24),
+                            OutlinedButton.icon(
+                              onPressed:
+                                  _submitting ? null : _generateStatement,
+                              icon: const Icon(Icons.description_outlined),
+                              label: const Text('Generate bank statement'),
+                            ),
+                          ] else if (_nextStep == 'provision_wallet' ||
+                              _nextStep == 'retry_wallet_provisioning') ...[
+                            _SectionHeader(
+                              title: 'Wallet',
+                              badge: _RequiredBadge(required: true),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.account_balance_wallet_rounded,
+                                      color: cs.primary, size: 28),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _requirements?.bannerMessage ??
+                                          'Provision your wallet to finish onboarding.',
+                                      style: AppTypography.bodyMd(cs.onSurface),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            AjoGradientButton(
+                              label: _nextStep == 'retry_wallet_provisioning'
+                                  ? 'Retry wallet provisioning'
+                                  : 'Provision wallet',
+                              suffixIcon: Icons.account_balance_rounded,
+                              isLoading: _submitting,
+                              onPressed:
+                                  _submitting ? null : _provisionWallet,
+                            ),
+                          ] else ...[
+                            _SectionHeader(
+                              title: 'BVN verification',
+                              badge: _RequiredBadge(required: true),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _bvnController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 11,
+                              decoration: const InputDecoration(
+                                labelText: 'BVN',
+                                hintText: 'Enter 11-digit BVN',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            AjoGradientButton(
+                              label: 'Verify BVN',
+                              suffixIcon: Icons.verified_user_rounded,
+                              isLoading: _submitting,
+                              onPressed: _submitting ? null : _verifyBvn,
+                            ),
+                            const SizedBox(height: 28),
+                            _SectionHeader(
+                              title: 'Bank statement',
+                              badge: _RequiredBadge(required: false),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Optional: generate a statement for your records.',
+                              style: AppTypography.bodySm(cs.onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed:
+                                  _submitting ? null : _generateStatement,
+                              icon: const Icon(Icons.description_rounded),
+                              label: const Text('Generate bank statement'),
+                            ),
+                          ],
+                          if (_statement != null &&
+                              _nextStep != 'completed') ...[
+                            const SizedBox(height: 20),
+                            Text(
+                              'Statement summary',
+                              style: AppTypography.titleSm(cs.onSurface),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Average balance: ${_statement!.averageBalance.toStringAsFixed(2)}',
+                              style: AppTypography.bodyMd(cs.onSurface),
+                            ),
+                            Text(
+                              'Total credit: ${_statement!.totalCredit.toStringAsFixed(2)}',
+                              style: AppTypography.bodyMd(cs.onSurface),
+                            ),
+                            Text(
+                              'Total debit: ${_statement!.totalDebit.toStringAsFixed(2)}',
+                              style: AppTypography.bodyMd(cs.onSurface),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-
-                    _CompactUploadRow(
-                      icon: Icons.description_outlined,
-                      title: 'Proof of employment',
-                      subtitle: 'Offer letter or latest payslip',
-                      uploaded: _employmentUploaded,
-                      onTap: () =>
-                          setState(() => _employmentUploaded = !_employmentUploaded),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // -- Submit CTA -----------------------------------
-                    AjoGradientButton(
-                      label: 'Submit for Review',
-                      suffixIcon: Icons.send_rounded,
-                      onPressed: () {},
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'By submitting, you agree to our Terms of Service and '
-                      'Privacy Policy regarding data verification.',
-                      style: AppTypography.labelSm(cs.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -130,7 +288,63 @@ class _KycScreenState extends State<KycScreen> {
   }
 }
 
-// --- Section header -----------------------------------------------------------
+// ─── Completed state ──────────────────────────────────────────────────────────
+
+class _KycCompletedCard extends StatelessWidget {
+  const _KycCompletedCard({this.statement});
+
+  final BankStatementSummary? statement;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cs.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: cs.primary, size: 32),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'KYC complete',
+                  style: AppTypography.titleMd(cs.onSurface),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Your BVN is verified and your wallet is active.',
+            style: AppTypography.bodyMd(cs.onSurfaceVariant),
+          ),
+          if (statement != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Latest statement',
+              style: AppTypography.titleSm(cs.onSurface),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Avg. balance: ${statement!.averageBalance.toStringAsFixed(2)}',
+              style: AppTypography.bodySm(cs.onSurface),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, required this.badge});
@@ -180,7 +394,7 @@ class _RequiredBadge extends StatelessWidget {
   }
 }
 
-// --- Dashed drop zone ---------------------------------------------------------
+// ─── Dashed drop zone ─────────────────────────────────────────────────────────
 
 class _DropZone extends StatelessWidget {
   const _DropZone({
@@ -244,7 +458,7 @@ class _DropZone extends StatelessWidget {
   }
 }
 
-// --- Uploaded file row --------------------------------------------------------
+// ─── Uploaded file row ────────────────────────────────────────────────────────
 
 class _UploadedFile extends StatelessWidget {
   const _UploadedFile({required this.name, required this.onRemove});
@@ -285,7 +499,7 @@ class _UploadedFile extends StatelessWidget {
   }
 }
 
-// --- Compact upload row -------------------------------------------------------
+// ─── Compact upload row ───────────────────────────────────────────────────────
 
 class _CompactUploadRow extends StatelessWidget {
   const _CompactUploadRow({
@@ -364,7 +578,7 @@ class _CompactUploadRow extends StatelessWidget {
   }
 }
 
-// --- Dashed border painter ----------------------------------------------------
+// ─── Dashed border painter ────────────────────────────────────────────────────
 
 class _DashedBorderPainter extends CustomPainter {
   const _DashedBorderPainter({required this.color, required this.radius});

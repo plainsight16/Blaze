@@ -52,7 +52,9 @@ class ApiClient {
     final decoded = _decode(res);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(
-        decoded['message']?.toString() ?? 'Request failed',
+        decoded['message']?.toString() ??
+            decoded['detail']?.toString() ??
+            'Request failed',
         statusCode: res.statusCode,
         body: decoded,
       );
@@ -74,7 +76,9 @@ class ApiClient {
     final decoded = _decode(res);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(
-        decoded['message']?.toString() ?? 'Request failed',
+        decoded['message']?.toString() ??
+            decoded['detail']?.toString() ??
+            'Request failed',
         statusCode: res.statusCode,
         body: decoded,
       );
@@ -94,7 +98,9 @@ class ApiClient {
     final decoded = _decode(res);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(
-        decoded['message']?.toString() ?? 'Request failed',
+        decoded['message']?.toString() ??
+            decoded['detail']?.toString() ??
+            'Request failed',
         statusCode: res.statusCode,
         body: decoded,
       );
@@ -113,3 +119,4 @@ class ApiClient {
     return <String, dynamic>{'data': decoded};
   }
 }
+
