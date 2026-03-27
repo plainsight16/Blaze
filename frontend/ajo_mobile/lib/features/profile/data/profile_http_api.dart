@@ -101,6 +101,33 @@ class ProfileHttpApi {
     return WalletInfo.fromJson(res);
   }
 
+  /// Authoritative wallet record (balance, account details). Throws [ApiException]
+  /// with status 404 if the user has no wallet yet.
+  Future<WalletInfo> getWallet() async {
+    final res = await client.getJson('/wallet');
+    if (res is! Map<String, dynamic>) {
+      throw ApiException('Invalid /wallet response', body: res);
+    }
+    return WalletInfo.fromJson(res);
+  }
+
+  /// Credits the authenticated user's wallet (simulated / internal funding).
+  Future<WalletFundTransaction> fundWallet({
+    required double amount,
+    required String reference,
+    String? description,
+  }) async {
+    final body = <String, dynamic>{
+      'amount': amount,
+      'reference': reference,
+    };
+    if (description != null && description.isNotEmpty) {
+      body['description'] = description;
+    }
+    final res = await client.postJson('/wallet/fund', body: body);
+    return WalletFundTransaction.fromJson(res);
+  }
+
   Future<KycRequirements> getKycRequirements() async {
     final res = await client.getJson('/kyc/requirements');
     if (res is! Map<String, dynamic>) {

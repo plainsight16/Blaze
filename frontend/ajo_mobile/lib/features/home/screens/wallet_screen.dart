@@ -21,6 +21,7 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   UserProfile? _profile;
+  WalletInfo? _liveWallet;
   bool _loading = true;
   String? _error;
 
@@ -34,9 +35,18 @@ class _WalletScreenState extends State<WalletScreen> {
     if (mounted) setState(() => _loading = true);
     try {
       final profile = await profileHttpApi.getMe();
+      WalletInfo? live;
+      if (profile.wallet != null) {
+        try {
+          live = await profileHttpApi.getWallet();
+        } catch (_) {
+          live = profile.wallet;
+        }
+      }
       if (!mounted) return;
       setState(() {
         _profile = profile;
+        _liveWallet = live;
         _error = null;
         _loading = false;
       });
@@ -109,9 +119,11 @@ class _WalletScreenState extends State<WalletScreen> {
               delegate: SliverChildListDelegate([
                 _BalanceCard(
                   profile: _profile,
+                  liveWallet: _liveWallet,
                   loading: _loading,
                   error: _error,
                   onProvisionWallet: _provisionWallet,
+                  onRefresh: _load,
                 ),
                 const SizedBox(height: 16),
                 _StatsRow(),
@@ -188,21 +200,27 @@ class _WalletAppBar extends StatelessWidget {
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({
     required this.profile,
+    required this.liveWallet,
     required this.loading,
     required this.error,
     required this.onProvisionWallet,
+    required this.onRefresh,
   });
 
   final UserProfile? profile;
+  final WalletInfo? liveWallet;
   final bool loading;
   final String? error;
   final Future<void> Function() onProvisionWallet;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final ext = context.ajoTheme;
-    final hasWallet = profile?.wallet != null;
+    final wallet = liveWallet ?? profile?.wallet;
+    final hasWallet = wallet != null;
+    final canDeposit = wallet != null && wallet.status == 'active';
     const cardBg1 = Color(0xFF0A1F14);
     const cardBg2 = Color(0xFF1A2E1E);
 
@@ -234,13 +252,13 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hasWallet ? profile!.wallet!.amount ?? "₦0.00": 'Wallet Not Provisioned',
+            wallet != null ? wallet.formattedBalance : 'Wallet Not Provisioned',
             style: AppTypography.displayMd(Colors.white),
           ),
           const SizedBox(height: 6),
           Text(
-            hasWallet
-                ? '${profile?.wallet?.bankName ?? 'Bank'} • ${profile?.wallet?.accountNumber ?? '--'}'
+            wallet != null
+                ? '${wallet.bankName ?? 'Bank'} • ${wallet.accountNumber ?? '--'}'
                 : (error ?? 'Complete KYC to provision wallet.'),
             style: AppTypography.bodySm(Colors.white70),
           ),
@@ -250,15 +268,25 @@ class _BalanceCard extends StatelessWidget {
               Expanded(
                 child: _CardButton(
                   icon: Icons.add_circle_outline_rounded,
-                  label: hasWallet ? 'Deposit' : 'Provision',
+                  label: canDeposit
+                      ? 'Deposit'
+                      : hasWallet
+                          ? 'Wallet ${wallet.status}'
+                          : 'Provision',
                   isPrimary: true,
-                  onTap: hasWallet
-                      ? () => Navigator.of(context).push(
+                  onTap: canDeposit
+                      ? () {
+                          Navigator.of(context)
+                              .push(
                             MaterialPageRoute<void>(
                               builder: (_) => const DepositScreen(),
                             ),
                           )
-                      : onProvisionWallet,
+                              .then((_) => onRefresh());
+                        }
+                      : hasWallet
+                          ? null
+                          : () => onProvisionWallet(),
                 ),
               ),
               const SizedBox(width: 12),
@@ -295,42 +323,46 @@ class _CardButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isPrimary,
-    required this.onTap,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool isPrimary;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final enabled = onTap != null;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: isPrimary ? cs.primary : const Color(0xFF2A3A2E),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isPrimary ? cs.onPrimary : Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTypography.labelMd(
-                isPrimary ? cs.onPrimary : Colors.white,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: isPrimary ? cs.primary : const Color(0xFF2A3A2E),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isPrimary ? cs.onPrimary : Colors.white,
+                size: 18,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppTypography.labelMd(
+                  isPrimary ? cs.onPrimary : Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

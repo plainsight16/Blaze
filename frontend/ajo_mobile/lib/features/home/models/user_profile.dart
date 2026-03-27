@@ -5,7 +5,7 @@ class WalletInfo {
     this.accountName,
     this.accountNumber,
     this.bankName,
-    this.amount,  
+    this.amount,
   });
 
   final String id;
@@ -15,14 +15,70 @@ class WalletInfo {
   final String? bankName;
   final String? amount;
 
+  double? get amountValue {
+    if (amount == null || amount!.isEmpty) return null;
+    return double.tryParse(amount!);
+  }
+
+  String get formattedBalance {
+    final v = amountValue ?? 0;
+    final fixed = v.toStringAsFixed(2);
+    final parts = fixed.split('.');
+    final intPart = parts.first.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => ',',
+    );
+    return '₦$intPart.${parts.last}';
+  }
+
   factory WalletInfo.fromJson(Map<String, dynamic> json) {
+    final rawAmount = json['amount'];
+    final amountStr = rawAmount == null
+        ? null
+        : (rawAmount is num ? rawAmount.toString() : rawAmount.toString());
     return WalletInfo(
       id: json['id']?.toString() ?? '',
       status: json['status']?.toString() ?? 'not_started',
       accountName: json['account_name']?.toString(),
       accountNumber: json['account_number']?.toString(),
       bankName: json['bank_name']?.toString(),
-      amount: json['amount']?.toString(),
+      amount: amountStr,
+    );
+  }
+}
+
+class WalletFundTransaction {
+  const WalletFundTransaction({
+    required this.id,
+    required this.walletId,
+    required this.type,
+    required this.amount,
+    required this.reference,
+    this.description,
+    required this.status,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String walletId;
+  final String type;
+  final double amount;
+  final String reference;
+  final String? description;
+  final String status;
+  final String createdAt;
+
+  factory WalletFundTransaction.fromJson(Map<String, dynamic> json) {
+    double toDouble(dynamic v) => (v as num?)?.toDouble() ?? 0;
+    return WalletFundTransaction(
+      id: json['id']?.toString() ?? '',
+      walletId: json['wallet_id']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      amount: toDouble(json['amount']),
+      reference: json['reference']?.toString() ?? '',
+      description: json['description']?.toString(),
+      status: json['status']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 }
