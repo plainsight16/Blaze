@@ -123,17 +123,28 @@ class GroupsHttpApi {
 
   final ApiClient client;
 
-  Future<List<GroupSummary>> searchGroups({required String q}) async {
-    final res = await client.getJson(
-      '/groups',
-      query: <String, String>{'q': q},
-    );
-    final list = res is List ? res : const <dynamic>[];
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(GroupSummary.fromJson)
-        .toList();
+ 
+Future<List<GroupSummary>> searchGroups({required String q}) async {
+  final res = await client.getJson(
+    '/groups',
+    query: <String, String>{'q': q},
+  );
+
+  // Robust parsing: handles {"data": [...]} OR direct [...]
+  dynamic rawList;
+  if (res is Map<String, dynamic> && res.containsKey('data')) {
+    rawList = res['data'];
+  } else if (res is List) {
+    rawList = res;
+  } else {
+    rawList = const <dynamic>[];
   }
+
+  return (rawList as List<dynamic>)
+      .whereType<Map<String, dynamic>>()
+      .map<GroupSummary>(GroupSummary.fromJson)
+      .toList();
+}
 
   Future<GroupSummary> createGroup({
     required String name,
@@ -159,8 +170,15 @@ class GroupsHttpApi {
 
   Future<List<MyMembership>> myGroups() async {
     final res = await client.getJson('/groups/me');
-    final list = res is List ? res : const <dynamic>[];
-    return list.whereType<Map<String, dynamic>>().map(MyMembership.fromJson).toList();
+    dynamic rawList;
+    if (res is Map<String, dynamic> && res.containsKey('data')) {
+    rawList = res['data'];
+  } else if (res is List) {
+    rawList = res;
+  } else {
+    rawList = const <dynamic>[];
+  }
+    return (rawList as List<dynamic>).whereType<Map<String, dynamic>>().map(MyMembership.fromJson).toList();
   }
 
   Future<List<GroupInvite>> myInvites() async {
@@ -215,4 +233,3 @@ class GroupsHttpApi {
     await client.postJsonNoBody('/groups/$groupId/leave');
   }
 }
-

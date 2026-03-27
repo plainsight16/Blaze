@@ -234,7 +234,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hasWallet ? 'Wallet Active' : 'Wallet Not Provisioned',
+            hasWallet ? profile!.wallet!.amount ?? "₦0.00": 'Wallet Not Provisioned',
             style: AppTypography.displayMd(Colors.white),
           ),
           const SizedBox(height: 6),
