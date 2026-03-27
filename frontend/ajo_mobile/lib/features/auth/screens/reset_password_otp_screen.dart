@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
-import '../data/mock_auth_api.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import 'set_new_password_screen.dart';
 
 class ResetPasswordOtpScreen extends StatefulWidget {
@@ -61,10 +62,6 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen>
 
   bool get _isFilled => _controllers.every((c) => c.text.isNotEmpty);
 
-  Future<void> _playShake() async {
-    await _shakeController.forward(from: 0);
-  }
-
   Future<void> _verify() async {
     FocusScope.of(context).unfocus();
     final code = _controllers.map((c) => c.text).join();
@@ -72,23 +69,15 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen>
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.verifyPasswordResetOtp(code);
       if (!mounted) return;
       await Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => SetNewPasswordScreen(identifier: widget.identifier),
+          builder: (_) => SetNewPasswordScreen(
+            email: widget.identifier,
+            otp: code,
+          ),
         ),
-      );
-    } on MockAuthException catch (_) {
-      await _playShake();
-      if (!mounted) return;
-      for (final c in _controllers) {
-        c.clear();
-      }
-      _focusNodes.first.requestFocus();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid reset code')),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -99,14 +88,12 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen>
     if (_resending) return;
     setState(() => _resending = true);
     try {
-      await mockAuthApi.requestPasswordReset(
-        identifier: widget.identifier,
-      );
+      await authHttpApi.forgotPassword(email: widget.identifier);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('A new reset code has been sent (mock).')),
+        const SnackBar(content: Text('A new reset code has been sent.')),
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -15,28 +15,26 @@ class Wallet(Base):
 
     __tablename__ = "wallets"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(
-        String,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
-    provider: Mapped[str] = mapped_column(String, nullable=False, default="interswitch")
-    provider_wallet_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    provider_reference: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    account_name: Mapped[str] = mapped_column(String, nullable=False)
-    account_number: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    bank_name: Mapped[str | None] = mapped_column(String, nullable=True)
-    bank_code: Mapped[str | None] = mapped_column(String, nullable=True)
-    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
-    failure_reason: Mapped[str | None] = mapped_column(String, nullable=True)
-    provisioned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    id: Mapped[str]                           = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str | None]               = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, unique=True, index=True)
+    group_id: Mapped[str | None]              = mapped_column(String, ForeignKey("groups.id", ondelete="CASCADE"), nullable=True, unique=True, index=True)
+    provider: Mapped[str]                     = mapped_column(String, nullable=False, default="interswitch")
+    provider_wallet_id: Mapped[str | None]    = mapped_column(String, nullable=True, unique=True)
+    provider_reference: Mapped[str | None]    = mapped_column(String, nullable=True, unique=True)
+    account_name: Mapped[str]                 = mapped_column(String, nullable=False)
+    account_number: Mapped[str | None]        = mapped_column(String, nullable=True, unique=True)
+    bank_name: Mapped[str | None]             = mapped_column(String, nullable=True)
+    bank_code: Mapped[str | None]             = mapped_column(String, nullable=True)
+    amount: Mapped[float | None]              = mapped_column(Float, nullable=True)
+    status: Mapped[str]                       = mapped_column(String, nullable=False, default="pending")
+    failure_reason: Mapped[str | None]        = mapped_column(String, nullable=True)
+    provisioned_at: Mapped[datetime | None]   = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime]              = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime]              = mapped_column(DateTime(timezone=True), nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="wallet")
+    transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="wallet", cascade="all, delete-orphan")
+    user: Mapped["User"]                      = relationship("User", back_populates="wallet")
+    group: Mapped["Group | None"]             = relationship("Group", back_populates="wallet")
 
     @property
     def is_active(self) -> bool:

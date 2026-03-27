@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import 'forgot_password_screen.dart';
 import '../auth_validators.dart';
-import '../data/mock_auth_api.dart';
-import 'otp_screen.dart';
+import '../../home/screens/home_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -35,19 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.login(
-        identifier: _identifierController.text,
-        password: _passwordController.text,
-      );
+      final email = _identifierController.text.trim();
+      await authHttpApi.login(email: email, password: _passwordController.text);
       if (!mounted) return;
-      final hint = _maskedIdentifier(_identifierController.text.trim());
-      await Navigator.push<void>(
+      await Navigator.pushAndRemoveUntil<void>(
         context,
-        MaterialPageRoute<void>(
-          builder: (_) => OtpScreen(contactMask: hint),
-        ),
+        MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+        (_) => false,
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
@@ -56,18 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
-  }
-
-  String _maskedIdentifier(String raw) {
-    if (raw.contains('@')) {
-      final parts = raw.split('@');
-      if (parts.length != 2 || parts[0].length < 2) return '••••@…';
-      final a = parts[0];
-      return '${a[0]}•••@${parts[1]}';
-    }
-    final digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 4) return '•••• ••42';
-    return '•••• ••${digits.substring(digits.length - 2)}';
   }
 
   @override
@@ -121,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 40),
 
-                      const _FieldLabel('Email or Phone Number'),
+                      const _FieldLabel('Email'),
                       const SizedBox(height: 8),
                       _InputField(
                         controller: _identifierController,
@@ -129,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icons.alternate_email_rounded,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        validator: AuthValidators.emailOrPhone,
+                        validator: AuthValidators.email,
                       ),
                       const SizedBox(height: 20),
 

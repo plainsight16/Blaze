@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../../../core/widgets/ajo_nav_bar.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../models/group_model.dart';
 
 class GroupDetailScreen extends StatelessWidget {
@@ -20,7 +22,7 @@ class GroupDetailScreen extends StatelessWidget {
         children: [
           CustomScrollView(
             slivers: [
-              // ── Header ────────────────────────────────────────────────
+              // -- Header ------------------------------------------------
               SliverAppBar(
                 pinned: true,
                 backgroundColor: cs.surface,
@@ -53,7 +55,7 @@ class GroupDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Group avatar + verified badge ────────────────
+                      // -- Group avatar + verified badge ----------------
                       Center(
                         child: Stack(
                           clipBehavior: Clip.none,
@@ -97,7 +99,7 @@ class GroupDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 28),
 
-                      // ── Name + admin ─────────────────────────────────
+                      // -- Name + admin ---------------------------------
                       Center(
                         child: Column(
                           children: [
@@ -124,7 +126,7 @@ class GroupDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── Stats row ────────────────────────────────────
+                      // -- Stats row ------------------------------------
                       Row(
                         children: [
                           _StatCard(
@@ -154,7 +156,7 @@ class GroupDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── Contribution schedule ────────────────────────
+                      // -- Contribution schedule ------------------------
                       _SectionTitle(
                           icon: Icons.calendar_month_outlined,
                           title: 'Contribution Schedule'),
@@ -176,7 +178,7 @@ class GroupDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── Requirements ─────────────────────────────────
+                      // -- Requirements ---------------------------------
                       _SectionTitle(
                           icon: Icons.checklist_rounded,
                           title: 'Requirements'),
@@ -196,7 +198,7 @@ class GroupDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // ── About ─────────────────────────────────────────
+                      // -- About -----------------------------------------
                       _SectionTitle(
                           icon: Icons.info_outline_rounded,
                           title: 'About this Group'),
@@ -216,14 +218,34 @@ class GroupDetailScreen extends StatelessWidget {
             ],
           ),
 
-          // ── Sticky CTA ────────────────────────────────────────────────
+          // -- Sticky CTA ------------------------------------------------
           Positioned(
             bottom: 56 + MediaQuery.of(context).padding.bottom,
             left: 20,
             right: 20,
             child: AjoGradientButton(
               label: 'REQUEST TO JOIN GROUP',
-              onPressed: () {},
+              onPressed: () async {
+                final id = group.id;
+                if (id == null || id.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Group id missing.')),
+                  );
+                  return;
+                }
+                try {
+                  await groupsHttpApi.requestJoinGroup(groupId: id);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Join request sent.')),
+                  );
+                } on ApiException catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message)),
+                  );
+                }
+              },
             ),
           ),
         ],
@@ -232,7 +254,7 @@ class GroupDetailScreen extends StatelessWidget {
   }
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// --- Stat card ----------------------------------------------------------------
 
 class _StatCard extends StatelessWidget {
   const _StatCard({
@@ -298,7 +320,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ─── Info card ────────────────────────────────────────────────────────────────
+// --- Info card ----------------------------------------------------------------
 
 class _InfoCard extends StatelessWidget {
   const _InfoCard({required this.children});
@@ -382,7 +404,7 @@ class _Chip extends StatelessWidget {
   }
 }
 
-// ─── Requirement row ──────────────────────────────────────────────────────────
+// --- Requirement row ----------------------------------------------------------
 
 class _RequirementRow extends StatelessWidget {
   const _RequirementRow({
@@ -440,7 +462,7 @@ class _RequirementRow extends StatelessWidget {
   }
 }
 
-// ─── Section title ────────────────────────────────────────────────────────────
+// --- Section title ------------------------------------------------------------
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.icon, required this.title});

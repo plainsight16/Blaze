@@ -122,6 +122,7 @@ def verify_bvn(db: Session, user: User, bvn: str) -> tuple[KYC, Wallet]:
     if existing_kyc and existing_kyc.bvn_hash != bvn_hash:
         raise ValueError("User already has a different BVN linked.")
 
+
     matched = verify_bvn_boolean_match(user.first_name, user.last_name, bvn)
     if not matched:
         raise ValueError("BVN could not be verified against the supplied name.")

@@ -18,24 +18,31 @@ from app.schemas.groups import (
     MyMembershipResponse,
     UpdateMemberRoleRequest,
 )
+from app.schemas.wallet import WalletResponse, FundWalletRequest, TransactionResponse
+from app.services.wallet import (
+    get_wallet_by_group_id,
+    provision_group_wallet,
+    fund_wallet,
+    WalletProvisioningError,
+)
 from app.services import groups as svc
 from app.utils.dependencies import get_current_user, get_db
 
 router = APIRouter()
 
 
-# ── Discovery ─────────────────────────────────────────────────────────────────
+# -- Discovery -----------------------------------------------------------------
 
 @router.get("", response_model=list[GroupSummaryResponse])
 def search_groups(
-    q:  str     = Query(..., min_length=1, description="Search term"),
+    q:  str     = Query("", description="Search term; omit or leave empty to list all public groups"),
     db: Session = Depends(get_db),
     _:  User    = Depends(get_current_user),
 ) -> list[GroupSummaryResponse]:
     return svc.search_groups(q, db)
 
 
-# ── My groups & invites ───────────────────────────────────────────────────────
+# -- My groups & invites -------------------------------------------------------
 
 @router.get("/me", response_model=list[MyMembershipResponse])
 def my_groups(
@@ -73,7 +80,7 @@ def decline_invite(
     return MessageResponse(message="Invite declined.")
 
 
-# ── Group management ──────────────────────────────────────────────────────────
+# -- Group management ----------------------------------------------------------
 
 @router.post("", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
 def create_group(
@@ -102,7 +109,7 @@ def delete_group(
     return MessageResponse(message="Group deleted.")
 
 
-# ── Membership ────────────────────────────────────────────────────────────────
+# -- Membership ----------------------------------------------------------------
 
 @router.get("/{group_id}/members", response_model=list[MemberResponse])
 def list_members(
@@ -146,7 +153,7 @@ def update_role(
     return MessageResponse(message="Role updated.")
 
 
-# ── Join requests (user → group) ──────────────────────────────────────────────
+# -- Join requests (user → group) ----------------------------------------------
 
 @router.post("/{group_id}/request", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def request_to_join(
@@ -189,7 +196,7 @@ def reject_request(
     return MessageResponse(message="Request rejected.")
 
 
-# ── Invites (admin → user) ────────────────────────────────────────────────────
+# -- Invites (admin → user) ----------------------------------------------------
 
 @router.post("/{group_id}/invite", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def invite_user(
@@ -200,3 +207,64 @@ def invite_user(
 ) -> MessageResponse:
     svc.invite_user(current_user, group_id, data.email, data.username, db)
     return MessageResponse(message="Invite sent.")
+
+@router.get("/{group_id}", response_model=GroupResponse)
+def get_group(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> GroupResponse:
+    group = svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+    return GroupResponse.model_validate(group)
+
+
+@router.get("/{group_id}/wallet", response_model=WalletResponse)
+def get_group_wallet(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletResponse:
+    svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+
+    wallet = get_wallet_by_group_id(group_id, db)
+    if not wallet:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group wallet not found.")
+    return WalletResponse.model_validate(wallet)
+
+
+@router.post("/{group_id}/wallet/provision", response_model=WalletResponse)
+def provision_group_wallet_route(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletResponse:
+    group = svc._get_group_or_404(group_id, db)
+    svc._require_admin(current_user.id, group_id, db)
+
+    try:
+        wallet = provision_group_wallet(db, group)
+    except WalletProvisioningError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    return WalletResponse.model_validate(wallet)
+
+
+@router.post("/{group_id}/wallet/fund", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+def fund_group_wallet(
+    group_id: str,
+    payload: FundWalletRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TransactionResponse:
+    svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+
+    wallet = get_wallet_by_group_id(group_id, db)
+    if not wallet:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group wallet not found.")
+    try:
+        tx = fund_wallet(db, wallet, payload.amount, payload.reference, payload.description)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return TransactionResponse.model_validate(tx)

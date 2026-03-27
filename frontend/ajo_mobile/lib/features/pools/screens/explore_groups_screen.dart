@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../models/group_model.dart';
+import '../data/groups_http_api.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 import '../../profile/screens/notifications_screen.dart';
@@ -18,35 +21,77 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
 
   static const _filters = ['All', 'Real Estate', 'Travel', 'Business', 'Family'];
 
-  static final _groups = [
-    GroupData(
-      name: 'Lagos Real Estate Pool',
-      members: 12,
-      capacityFraction: 0.80,
-      target: '₦5,000,000',
-      tag: 'TRENDING',
-      tagColor: const Color(0xFF19E619),
-      icon: Icons.apartment_rounded,
-    ),
-    GroupData(
-      name: 'December Maldives Trip',
-      members: 8,
-      capacityFraction: 0.40,
-      target: '₦2,500,000',
-      tag: 'VACATION',
-      tagColor: Colors.blue,
-      icon: Icons.beach_access_rounded,
-    ),
-    GroupData(
-      name: 'SME Business Fund',
-      members: 25,
-      capacityFraction: 0.95,
-      target: '₦10,000,000',
-      tag: 'BUSINESS',
-      tagColor: Colors.orange,
-      icon: Icons.business_center_rounded,
-    ),
-  ];
+  bool _loading = true;
+  String? _error;
+  List<GroupData> _groups = const [];
+
+  static const _queryByFilter = <int, String>{
+    0: 'a', // All
+    1: 'real',
+    2: 'travel',
+    3: 'business',
+    4: 'family',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGroups();
+  }
+
+  Future<void> _fetchGroups() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final q = _queryByFilter[_filterIndex] ?? 'a';
+      final summaries = await groupsHttpApi.searchGroups(q: q);
+      if (!mounted) return;
+      setState(() => _groups = summaries.map(_mapSummaryToUi).toList());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _groups = const [];
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  GroupData _mapSummaryToUi(GroupSummary summary) {
+    final type = summary.type.toLowerCase();
+    return GroupData(
+      id: summary.id,
+      name: summary.name,
+      description: summary.description,
+      type: summary.type,
+      members: 0,
+      capacityFraction: 0.5,
+      target: '₦0',
+      tag: type.isNotEmpty ? summary.type.toUpperCase() : 'GROUP',
+      tagColor: _tagColorForType(type),
+      icon: _iconForType(type),
+    );
+  }
+
+  IconData _iconForType(String type) {
+    if (type.contains('real')) return Icons.apartment_rounded;
+    if (type.contains('travel')) return Icons.beach_access_rounded;
+    if (type.contains('business')) return Icons.business_center_rounded;
+    if (type.contains('family')) return Icons.family_restroom_rounded;
+    return Icons.groups_rounded;
+  }
+
+  Color _tagColorForType(String type) {
+    if (type.contains('real')) return const Color(0xFF19E619);
+    if (type.contains('travel')) return Colors.blue;
+    if (type.contains('business')) return Colors.orange;
+    if (type.contains('family')) return Colors.purple;
+    return Colors.teal;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +114,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -106,7 +151,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Search bar ──────────────────────────────────────────────
+            // -- Search bar ----------------------------------------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -132,7 +177,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Filter chips ────────────────────────────────────────────
+            // -- Filter chips --------------------------------------------
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 52,
@@ -143,7 +188,10 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
                   itemBuilder: (context, i) {
                     final active = i == _filterIndex;
                     return GestureDetector(
-                      onTap: () => setState(() => _filterIndex = i),
+                      onTap: () {
+                        setState(() => _filterIndex = i);
+                        _fetchGroups();
+                      },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(right: 10),
@@ -168,27 +216,73 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Group cards ─────────────────────────────────────────────
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: GroupCard(
-                      group: _groups[i],
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              GroupDetailScreen(group: _groups[i]),
+            // -- Group cards ---------------------------------------------
+            if (_loading)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 32, 20, 100),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              )
+            else if (_error != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                  child: Column(
+                    children: [
+                      Text(
+                        _error!,
+                        style: AppTypography.bodyMd(
+                          ThemeData.light().colorScheme.error,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: _fetchGroups,
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                  childCount: _groups.length,
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: GroupCard(
+                        group: _groups[i],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => GroupDetailScreen(group: _groups[i]),
+                          ),
+                        ),
+                        onInterested: () async {
+                          final id = _groups[i].id;
+                          if (id == null || id.isEmpty) return;
+                          try {
+                            await groupsHttpApi.requestJoinGroup(groupId: id);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Join request sent.')),
+                            );
+                          } on ApiException catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.message)),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    childCount: _groups.length,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -196,12 +290,18 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
   }
 }
 
-// ─── Group card (public — reused in home screen "See All") ────────────────────
+// --- Group card (public — reused in home screen "See All") --------------------
 
 class GroupCard extends StatelessWidget {
-  const GroupCard({super.key, required this.group, required this.onTap});
+  const GroupCard({
+    super.key,
+    required this.group,
+    required this.onTap,
+    required this.onInterested,
+  });
   final GroupData group;
   final VoidCallback onTap;
+  final VoidCallback onInterested;
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +389,7 @@ class GroupCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: onTap,
+                        onTap: onInterested,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 18, vertical: 8),

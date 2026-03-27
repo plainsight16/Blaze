@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:ajo_mobile/features/pools/data/mock_pools.dart';
+import 'package:ajo_mobile/features/pools/screens/joined_group_details.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
@@ -8,14 +10,13 @@ import '../../pools/screens/create_group_screen.dart';
 import '../../pools/screens/explore_groups_screen.dart';
 import 'account_screen.dart';
 import '../models/mock_user_profile.dart';
+
 import 'dashboard_details_screen.dart';
 import 'deposit_screen.dart';
 import '../../profile/screens/kyc_screen.dart';
 import 'wallet_screen.dart';
 
-// ─── Main Shell ───────────────────────────────────────────────────────────────
-// Wraps the four bottom-nav destinations in a single stateful scaffold so that
-// switching tabs preserves each screen's scroll position.
+// --- Main Shell ---------------------------------------------------------------
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
   late final PageController _pageController;
 
   @override
@@ -53,8 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    // Only show the FAB on the Dashboard tab
     final showFab = _selectedIndex == 0;
 
     return Scaffold(
@@ -76,8 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _selectedIndex,
         onTap: _onTabTapped,
       ),
-      // PageView enables swipe navigation between top-level tabs.
-      // Each tab is wrapped so its subtree is kept alive when offscreen.
       body: PageView(
         controller: _pageController,
         onPageChanged: (i) => setState(() => _selectedIndex = i),
@@ -89,15 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _KeptPage(
             storageKey: PageStorageKey('home_explore'),
             child: ExploreGroupsScreen(),
-
           ),
           _KeptPage(
             storageKey: PageStorageKey('home_wallet'),
             child: WalletScreen(),
           ),
-
-
-                    _KeptPage(
+          _KeptPage(
             storageKey: PageStorageKey('home_accounts'),
             child: AccountScreen(),
           ),
@@ -107,8 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ─── Home Content ─────────────────────────────────────────────────────────────
-// Extracted from the old HomeScreen body so it lives cleanly inside the shell.
+// --- Home Content -------------------------------------------------------------
 
 class _HomeContent extends StatefulWidget {
   const _HomeContent();
@@ -127,14 +119,12 @@ class _HomeContentState extends State<_HomeContent> {
   }
 
   Future<void> _fakeFetch() async {
-    // Simulate remote requests so shimmer is visible.
     await Future<void>.delayed(const Duration(milliseconds: 1100));
     if (!mounted) return;
     setState(() => _loading = false);
   }
 
   Future<void> _onRefresh() async {
-    // Show shimmer again during refresh.
     if (mounted) setState(() => _loading = true);
     await _fakeFetch();
   }
@@ -172,29 +162,18 @@ class _HomeContentState extends State<_HomeContent> {
                           builder: (_) => const ExploreGroupsScreen(),
                         ),
                       ),
-                      child: Text(
-                        'See All',
-                        style: AppTypography.labelMd(cs.primary),
-                      ),
+                      child: Text('See All',
+                          style: AppTypography.labelMd(cs.primary)),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _PoolCard(
-                    loading: _loading,
-                    title: 'Christmas 2024',
-                    progress: 0.65,
-                    amount: '₦45,000',
-                    nextDate: 'Next: Dec 15',
-                    icon: Icons.celebration_outlined,
-                  ),
-                  const SizedBox(height: 10),
-                  _PoolCard(
-                    loading: _loading,
-                    title: 'Housing Fund',
-                    progress: 0.20,
-                    amount: '₦120,000',
-                    nextDate: 'Next: Jan 01',
-                    icon: Icons.home_outlined,
+
+                  // -- Mock-data driven pool list ---------------------------
+                  ...mockActivePools.map(
+                    (pool) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _PoolCard(loading: _loading, pool: pool),
+                    ),
                   ),
                 ]),
               ),
@@ -206,12 +185,10 @@ class _HomeContentState extends State<_HomeContent> {
   }
 }
 
-class _KeptPage extends StatefulWidget {
-  const _KeptPage({
-    required this.storageKey,
-    required this.child,
-  });
+// --- Kept Page ----------------------------------------------------------------
 
+class _KeptPage extends StatefulWidget {
+  const _KeptPage({required this.storageKey, required this.child});
   final Key storageKey;
   final Widget child;
 
@@ -227,14 +204,11 @@ class _KeptPageState extends State<_KeptPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return KeyedSubtree(
-      key: widget.storageKey,
-      child: widget.child,
-    );
+    return KeyedSubtree(key: widget.storageKey, child: widget.child);
   }
 }
 
-// ─── Glass App Bar ────────────────────────────────────────────────────────────
+// --- Glass App Bar ------------------------------------------------------------
 
 class _GlassAppBar extends StatelessWidget {
   @override
@@ -259,7 +233,6 @@ class _GlassAppBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Avatar
                 Container(
                   width: 42,
                   height: 42,
@@ -267,11 +240,8 @@ class _GlassAppBar extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: cs.secondaryContainer,
                   ),
-                  child: Icon(
-                    Icons.person,
-                    color: cs.onSecondaryContainer,
-                    size: 22,
-                  ),
+                  child: Icon(Icons.person,
+                      color: cs.onSecondaryContainer, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -279,18 +249,13 @@ class _GlassAppBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Welcome back,',
-                        style: AppTypography.labelSm(cs.onSurfaceVariant),
-                      ),
-                      Text(
-                        mockUserProfile.fullName,
-                        style: AppTypography.titleMd(cs.onSurface),
-                      ),
+                      Text('Welcome back,',
+                          style: AppTypography.labelSm(cs.onSurfaceVariant)),
+                      Text(mockUserProfile.fullName,
+                          style: AppTypography.titleMd(cs.onSurface)),
                     ],
                   ),
                 ),
-                // Theme toggle
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: themeModeNotifier,
                   builder: (context, _, _) {
@@ -316,12 +281,10 @@ class _GlassAppBar extends StatelessWidget {
                     );
                   },
                 ),
-                // Messages button
                 GestureDetector(
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const MessagesScreen(),
-                    ),
+                        builder: (_) => const MessagesScreen()),
                   ),
                   child: Stack(
                     children: [
@@ -332,11 +295,8 @@ class _GlassAppBar extends StatelessWidget {
                           color: cs.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          color: cs.onSurface,
-                          size: 22,
-                        ),
+                        child: Icon(Icons.chat_bubble_outline_rounded,
+                            color: cs.onSurface, size: 22),
                       ),
                       Positioned(
                         top: 8,
@@ -347,10 +307,8 @@ class _GlassAppBar extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: cs.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: cs.surface,
-                              width: 1.5,
-                            ),
+                            border:
+                                Border.all(color: cs.surface, width: 1.5),
                           ),
                         ),
                       ),
@@ -366,6 +324,8 @@ class _GlassAppBar extends StatelessWidget {
     );
   }
 }
+
+// --- Shimmer Box --------------------------------------------------------------
 
 class _ShimmerBox extends StatefulWidget {
   const _ShimmerBox({
@@ -437,11 +397,10 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   }
 }
 
-// ─── Balance Card ─────────────────────────────────────────────────────────────
+// --- Balance Card -------------------------------------------------------------
 
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({this.loading = false});
-
   final bool loading;
 
   @override
@@ -454,7 +413,7 @@ class _BalanceCard extends StatelessWidget {
     final intPart = parts.first;
     final decPart = parts.length > 1 ? parts.last : '00';
     final intFormatted = intPart.replaceAllMapped(
-      RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (m) => ',',
     );
 
@@ -506,10 +465,7 @@ class _BalanceCard extends StatelessWidget {
                           return Positioned(
                             left: i * 22.0,
                             child: const _ShimmerBox(
-                              width: 32,
-                              height: 32,
-                              radius: 100,
-                            ),
+                                width: 32, height: 32, radius: 100),
                           );
                         }),
                       ),
@@ -524,14 +480,9 @@ class _BalanceCard extends StatelessWidget {
                       ),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
+                            horizontal: 16, vertical: 10),
                         child: _ShimmerBox(
-                          width: 120,
-                          height: 18,
-                          radius: 10,
-                        ),
+                            width: 120, height: 18, radius: 10),
                       ),
                     ),
                   ],
@@ -578,31 +529,27 @@ class _BalanceCard extends StatelessWidget {
                     Text(
                       '₦',
                       style: AppTypography.displaySm(cs.primary).copyWith(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                      ),
+                          fontSize: 26, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(width: 2),
                     Text(
                       intFormatted,
                       style: AppTypography.displaySm(Colors.white).copyWith(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
-                      ),
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1),
                     ),
                     Text(
                       '.$decPart',
                       style: AppTypography.headlineSm(
-                        Colors.white.withValues(alpha: 0.60),
-                      ).copyWith(fontSize: 24),
+                              Colors.white.withValues(alpha: 0.60))
+                          .copyWith(fontSize: 24),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    // Member avatars
                     SizedBox(
                       height: 32,
                       width: 104,
@@ -619,21 +566,18 @@ class _BalanceCard extends StatelessWidget {
                                     ? cardSurface
                                     : cs.primary.withValues(alpha: 0.25),
                                 border: Border.all(
-                                  color: cardSurface,
-                                  width: 2,
-                                ),
+                                    color: cardSurface, width: 2),
                               ),
                               child: i < 3
-                                  ? Icon(
-                                      Icons.person,
+                                  ? Icon(Icons.person,
                                       size: 16,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.70),
-                                    )
+                                      color: Colors.white
+                                          .withValues(alpha: 0.70))
                                   : Center(
                                       child: Text(
                                         '+12',
-                                        style: AppTypography.labelSm(cs.primary)
+                                        style: AppTypography.labelSm(
+                                                cs.primary)
                                             .copyWith(fontSize: 9),
                                       ),
                                     ),
@@ -643,7 +587,6 @@ class _BalanceCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // View Details button
                     Container(
                       decoration: BoxDecoration(
                         color: cs.primary,
@@ -663,29 +606,28 @@ class _BalanceCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => const DashboardDetailsScreen(),
+                              builder: (_) =>
+                                  const DashboardDetailsScreen(),
                             ),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
+                                horizontal: 16, vertical: 10),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   'View Details',
                                   style: AppTypography.labelMd(
-                                    const Color(0xFF003919),
-                                  ).copyWith(fontWeight: FontWeight.w700),
+                                          const Color(0xFF003919))
+                                      .copyWith(
+                                          fontWeight: FontWeight.w700),
                                 ),
                                 const SizedBox(width: 4),
                                 const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 12,
-                                  color: Color(0xFF003919),
-                                ),
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 12,
+                                    color: Color(0xFF003919)),
                               ],
                             ),
                           ),
@@ -700,11 +642,10 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-// ─── Profile Completion Card ──────────────────────────────────────────────────
+// --- Profile Completion Card --------------------------------------------------
 
 class _ProfileCompletionCard extends StatelessWidget {
   const _ProfileCompletionCard({this.loading = false});
-
   final bool loading;
 
   @override
@@ -749,23 +690,15 @@ class _ProfileCompletionCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: SizedBox(
-                    height: 6,
-                    child: const _ShimmerBox(
-                      width: double.infinity,
-                      height: 6,
-                      radius: 100,
-                    ),
-                  ),
+                const ClipRRect(
+                  borderRadius:
+                      BorderRadius.all(Radius.circular(100)),
+                  child: _ShimmerBox(
+                      width: double.infinity, height: 6, radius: 100),
                 ),
                 const SizedBox(height: 14),
                 const _ShimmerBox(
-                  width: double.infinity,
-                  height: 44,
-                  radius: 10,
-                ),
+                    width: double.infinity, height: 44, radius: 10),
               ],
             )
           : Column(
@@ -782,7 +715,8 @@ class _ProfileCompletionCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             'Unlock all features by finishing your account setup.',
-                            style: AppTypography.bodySm(cs.onSurfaceVariant),
+                            style:
+                                AppTypography.bodySm(cs.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -808,7 +742,8 @@ class _ProfileCompletionCard extends StatelessWidget {
                             .copyWith(fontWeight: FontWeight.w700)),
                     const Spacer(),
                     Text('3/4 Steps',
-                        style: AppTypography.labelSm(cs.onSurfaceVariant)),
+                        style:
+                            AppTypography.labelSm(cs.onSurfaceVariant)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -828,7 +763,8 @@ class _ProfileCompletionCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 GestureDetector(
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const KycScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const KycScreen()),
                   ),
                   child: Container(
                     width: double.infinity,
@@ -851,7 +787,7 @@ class _ProfileCompletionCard extends StatelessWidget {
   }
 }
 
-// --- Section Header -----------------------------------------------------------
+// --- Section Header ------------------------------------------------------------
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, this.action});
@@ -864,15 +800,15 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: AppTypography.titleLg(cs.onSurface)),
-        ),
+            child: Text(title,
+                style: AppTypography.titleLg(cs.onSurface))),
         action ?? const SizedBox.shrink(),
       ],
     );
   }
 }
 
-// --- Quick Actions Grid -------------------------------------------------------
+// --- Quick Actions Grid --------------------------------------------------------
 
 class _QuickActionsGrid extends StatelessWidget {
   @override
@@ -886,8 +822,7 @@ class _QuickActionsGrid extends StatelessWidget {
             subtitle: 'Join new savings pools',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const ExploreGroupsScreen(),
-              ),
+                  builder: (_) => const ExploreGroupsScreen()),
             ),
           ),
         ),
@@ -899,8 +834,7 @@ class _QuickActionsGrid extends StatelessWidget {
             subtitle: 'Add money to your plan',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const DepositScreen(),
-              ),
+                  builder: (_) => const DepositScreen()),
             ),
           ),
         ),
@@ -951,7 +885,8 @@ class _ActionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(title, style: AppTypography.titleMd(cs.onSurface)),
             const SizedBox(height: 4),
-            Text(subtitle, style: AppTypography.bodySm(cs.onSurfaceVariant)),
+            Text(subtitle,
+                style: AppTypography.bodySm(cs.onSurfaceVariant)),
           ],
         ),
       ),
@@ -964,25 +899,44 @@ class _ActionCard extends StatelessWidget {
 class _PoolCard extends StatelessWidget {
   const _PoolCard({
     this.loading = false,
-    required this.title,
-    required this.progress,
-    required this.amount,
-    required this.nextDate,
-    required this.icon,
+    required this.pool,
   });
 
   final bool loading;
-  final String title;
-  final double progress;
-  final String amount;
-  final String nextDate;
-  final IconData icon;
+  final PoolData pool;
+
+  static _StateStyle _styleFor(JoinedGroupState state, ColorScheme cs) {
+    return switch (state) {
+      JoinedGroupState.active => _StateStyle(
+          borderColor: cs.primary,
+          badgeColor: cs.primary.withValues(alpha: 0.12),
+          badgeTextColor: cs.primary,
+          badgeIcon: Icons.check_circle_outline_rounded,
+          badgeLabel: 'Active',
+        ),
+      JoinedGroupState.payout => _StateStyle(
+          borderColor: const Color(0xFF27AE60),
+          badgeColor: const Color(0xFF27AE60).withValues(alpha: 0.12),
+          badgeTextColor: const Color(0xFF27AE60),
+          badgeIcon: Icons.celebration_outlined,
+          badgeLabel: 'Payout',
+        ),
+      JoinedGroupState.defaulting => _StateStyle(
+          borderColor: const Color(0xFFD63B2B),
+          badgeColor: const Color(0xFFD63B2B).withValues(alpha: 0.10),
+          badgeTextColor: const Color(0xFFD63B2B),
+          badgeIcon: Icons.warning_amber_rounded,
+          badgeLabel: 'Overdue',
+        ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final ext = context.ajoTheme;
 
+    // -- Shimmer skeleton --------------------------------------------------
     if (loading) {
       return Container(
         decoration: BoxDecoration(
@@ -1003,86 +957,198 @@ class _PoolCard extends StatelessWidget {
                   SizedBox(height: 10),
                   _ShimmerBox(width: 210, height: 12, radius: 8),
                   SizedBox(height: 12),
-                  _ShimmerBox(width: double.infinity, height: 14, radius: 8),
+                  _ShimmerBox(
+                      width: double.infinity, height: 6, radius: 100),
                 ],
               ),
+            ),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: const [
+                _ShimmerBox(width: 60, height: 14, radius: 8),
+                SizedBox(height: 6),
+                _ShimmerBox(width: 44, height: 12, radius: 8),
+              ],
             ),
           ],
         ),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: cs.primary, width: 4),
+    final style = _styleFor(pool.state, cs);
+
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => JoinedGroupDetailScreen(state: pool.state),
         ),
-        boxShadow: AppTheme.ambientShadow(ext.ambientShadowColor),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border(
+            left: BorderSide(color: style.borderColor, width: 4),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTypography.titleSm(cs.onSurface)),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: SizedBox(
-                    height: 12,
-                    child: Stack(
-                      children: [
+          boxShadow: AppTheme.ambientShadow(ext.ambientShadowColor),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // -- Pool icon -------------------------------------------------
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(pool.icon,
+                  color: cs.onSurfaceVariant, size: 24),
+            ),
+            const SizedBox(width: 14),
+
+            // -- Title / cycle / progress ----------------------------------
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          pool.title,
+                          style: AppTypography.titleSm(cs.onSurface),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _StateBadge(
+                        icon: style.badgeIcon,
+                        label: style.badgeLabel,
+                        bgColor: style.badgeColor,
+                        textColor: style.badgeTextColor,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(pool.cycleLabel,
+                      style: AppTypography.bodySm(cs.onSurfaceVariant)),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: SizedBox(
+                      height: 6,
+                      child: Stack(children: [
                         Container(color: cs.surfaceContainerHighest),
                         FractionallySizedBox(
-                          widthFactor: progress,
+                          widthFactor: pool.progress,
                           child: Container(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [cs.primary, cs.secondary],
-                              ),
+                              color: style.borderColor,
                               borderRadius: BorderRadius.circular(100),
                             ),
                           ),
                         ),
-                      ],
+                      ]),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(pool.progress * 100).toInt()}%',
+                    style: AppTypography.labelSm(cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // -- Amount / date ---------------------------------------------
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(pool.contributionAmount,
+                    style: AppTypography.titleSm(cs.onSurface)),
                 const SizedBox(height: 4),
+                Text(pool.nextDate,
+                    style: AppTypography.titleSm(style.badgeTextColor)
+                        .copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
                 Text(
-                  '${(progress * 100).toInt()}%',
-                  style: AppTypography.labelSm(cs.onSurfaceVariant),
+                  pool.nextDateSub,
+                  style: AppTypography.labelSm(cs.onSurfaceVariant)
+                      .copyWith(fontSize: 9, letterSpacing: 0.3),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(amount, style: AppTypography.titleSm(cs.onSurface)),
-              const SizedBox(height: 4),
-              Text(nextDate, style: AppTypography.labelSm(cs.onSurfaceVariant)),
-            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- State Badge --------------------------------------------------------------
+
+class _StateBadge extends StatelessWidget {
+  const _StateBadge({
+    required this.icon,
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color bgColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: textColor, size: 11),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+// --- State Style --------------------------------------------------------------
+
+class _StateStyle {
+  const _StateStyle({
+    required this.borderColor,
+    required this.badgeColor,
+    required this.badgeTextColor,
+    required this.badgeIcon,
+    required this.badgeLabel,
+  });
+
+  final Color borderColor;
+  final Color badgeColor;
+  final Color badgeTextColor;
+  final IconData badgeIcon;
+  final String badgeLabel;
 }
 
 // --- Bottom Navigation --------------------------------------------------------
@@ -1115,22 +1181,19 @@ class _BottomNav extends StatelessWidget {
               selected: selectedIndex == 0,
               onTap: () => onTap(0),
             ),
-
             _NavItem(
               icon: Icons.explore_outlined,
               label: 'Explore',
               selected: selectedIndex == 1,
               onTap: () => onTap(1),
             ),
-
-            const Expanded(child: SizedBox()), // FAB space
+            const Expanded(child: SizedBox()),
             _NavItem(
               icon: Icons.account_balance_wallet_outlined,
               label: 'Wallet',
               selected: selectedIndex == 2,
               onTap: () => onTap(2),
             ),
-
             _NavItem(
               icon: Icons.person_outline_rounded,
               label: 'Accounts',

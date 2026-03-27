@@ -22,7 +22,7 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _ALGORITHM   = "HS256"
 
 
-# ── Passwords ─────────────────────────────────────────────────────────────────
+# -- Passwords -----------------------------------------------------------------
 
 def hash_password(password: str) -> str:
     return _pwd_context.hash(password)
@@ -32,7 +32,7 @@ def verify_password(plain: str, hashed: str) -> bool:
     return _pwd_context.verify(plain, hashed)
 
 
-# ── OTP ───────────────────────────────────────────────────────────────────────
+# -- OTP -----------------------------------------------------------------------
 
 def generate_otp() -> tuple[str, str]:
     """Return (raw_6_hex_chars, sha256_digest).  Store digest; send raw."""
@@ -45,7 +45,7 @@ def verify_otp(raw: str, stored_digest: str) -> bool:
     return hmac.compare_digest(_sha256(raw), stored_digest)
 
 
-# ── JWT access tokens ─────────────────────────────────────────────────────────
+# -- JWT access tokens ---------------------------------------------------------
 
 def create_access_token(user_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -61,7 +61,7 @@ def decode_access_token(token: str) -> str:
     return user_id
 
 
-# ── Refresh tokens ────────────────────────────────────────────────────────────
+# -- Refresh tokens ------------------------------------------------------------
 
 def generate_refresh_token() -> tuple[str, str]:
     """Return (raw_url_safe_token, sha256_digest).  Store digest; send raw."""
@@ -73,14 +73,14 @@ def refresh_token_expiry() -> datetime:
     return datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
 
-# ── BVN ───────────────────────────────────────────────────────────────────────
+# -- BVN -----------------------------------------------------------------------
 
 def hash_bvn(bvn: str) -> str:
     """HMAC-SHA256 with a server-side salt so raw BVNs are never stored."""
     return hmac.new(BVN_SALT.encode(), bvn.encode(), hashlib.sha256).hexdigest()
 
 
-# ── Internal helpers ──────────────────────────────────────────────────────────
+# -- Internal helpers ----------------------------------------------------------
 
 def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
