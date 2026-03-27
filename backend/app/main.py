@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 import app.models  # noqa: F401
 from app.config import ALLOWED_ORIGINS
 from app.database import Base, engine
-from app.routes import auth, groups, home, kyc, wallet
+from app.routes import auth, groups, home, kyc, wallet, user
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
@@ -64,6 +64,7 @@ app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
 app.include_router(kyc.router,    prefix="/kyc",    tags=["KYC"])
 app.include_router(wallet.router, prefix="/wallet", tags=["Wallet"])
 app.include_router(groups.router, prefix="/groups", tags=["Groups"])
+app.include_router(user.router,   prefix="/user",   tags=["User"])
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
