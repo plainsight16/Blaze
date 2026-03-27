@@ -97,3 +97,4 @@ def provision_user_wallet(
     db.commit()
     db.refresh(wallet)
     return wallet
+

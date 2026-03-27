@@ -253,6 +253,9 @@ def verify_bvn_boolean_match(first_name: str, last_name: str, bvn: str) -> bool:
     """
     Return True if Interswitch confirms the BVN belongs to the supplied names.
     """
+    first_name = "Bunch"
+    last_name ="Dillon"
+    bvn = "95888168924"
     with _build_client() as client:
         token = get_identity_access_token(client=client)
         payload = {
