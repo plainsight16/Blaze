@@ -1,44 +1,64 @@
 from datetime import datetime
-from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.schemas.wallet import OnboardingNextStep, WalletStatus
 
-# ── KYC ───────────────────────────────────────────────────────────────────────
 
 class KYCRequest(BaseModel):
     bvn: str = Field(..., min_length=11, max_length=11, pattern=r"^\d{11}$")
 
 
+class KYCRequirementsResponse(BaseModel):
+    bvn_required: bool
+    bvn_verified: bool
+    wallet_required: bool
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
+    banner_title: str | None = None
+    banner_message: str | None = None
+
+
 class KYCStatusResponse(BaseModel):
+    kyc_id: str | None
+    wallet_id: str | None
+    status: str
+    bvn_verified: bool
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
+
+
+class KYCVerificationResponse(BaseModel):
     kyc_id: str
-    status: str   # "pending" | "verified" | "failed"
+    wallet_id: str | None
+    status: str
+    bvn_verified: bool = True
+    wallet_provisioned: bool
+    wallet_status: WalletStatus
+    next_step: OnboardingNextStep
 
-
-# ── Bank Statement ────────────────────────────────────────────────────────────
 
 class MonthOnMonth(BaseModel):
-    """Single month row — stored in raw_data JSONB, never queried by column."""
-    totalDebit:     float
-    debitCount:     float
-    totalCredit:    float
-    creditCount:    float
-    yearMonth:      str
+    """Single month row stored in raw_data and returned read-only."""
+
+    totalDebit: float
+    debitCount: float
+    totalCredit: float
+    creditCount: float
+    yearMonth: str
     averageBalance: float
 
 
 class BankStatementResponse(BaseModel):
-    """
-    Reflects the actual model columns.
-    Aggregates are real typed fields; month rows come back from raw_data.
-    """
-    id:              str
-    user_id:         str
+    id: str
+    user_id: str
     average_balance: float
-    total_credit:    float
-    total_debit:     float
-    raw_data:        list[MonthOnMonth]
-    generated_at:    datetime
-    updated_at:      datetime
+    total_credit: float
+    total_debit: float
+    raw_data: list[MonthOnMonth]
+    generated_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}

@@ -16,6 +16,25 @@ def _require(key: str) -> str:
     return value
 
 
+def _optional(key: str, default: str = "") -> str:
+    return os.getenv(key, default).strip()
+
+
+def _build_virtual_account_url() -> str:
+    explicit = _optional("ISW_VIRTUAL_ACCOUNT_URL")
+    if explicit:
+        return explicit.rstrip("/")
+
+    base = _optional("ISW_QA_URL")
+    if not base:
+        return ""
+
+    normalized = base.rstrip("/")
+    if normalized.endswith("/api/v1/payable/virtualaccount"):
+        return normalized
+    return f"{normalized}/api/v1/payable/virtualaccount"
+
+
 # ── Database ──────────────────────────────────────────────────────────────────
 # Supabase connection-pooler URI (port 6543), e.g.:
 #   postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
@@ -30,6 +49,26 @@ SMTP_HOST: str = _require("SMTP_HOST")
 SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER: str = _require("SMTP_USER")
 SMTP_PASS: str = _require("SMTP_PASS")
+
+# Interswitch identity verification
+ISW_CLIENT_ID: str = _require("ISW_CLIENT_ID")
+ISW_CLIENT_SECRET: str = _require("ISW_CLIENT_SECRET")
+ISW_TOKEN_URL: str = _optional(
+    "ISW_TOKEN_URL",
+    "https://passport-v2.k8.isw.la/passport/oauth/token",
+)
+ISW_BVN_VERIFY_URL: str = _optional(
+    "ISW_BVN_VERIFY_URL",
+    "https://api-marketplace-routing.k8.isw.la/marketplace-routing/api/v1/verify/identity/bvn",
+)
+ISW_TIMEOUT_SECONDS: float = float(_optional("ISW_TIMEOUT_SECONDS", "15"))
+
+# Interswitch wallet / virtual-account settings
+ISW_MERCHANT_CODE: str = _optional("ISW_MERCHANT_CODE")
+ISW_QA_URL: str = _optional("ISW_QA_URL")
+ISW_QA_CLIENT_ID: str = _optional("ISW_QA_CLIENT_ID")
+ISW_QA_CLIENT_SECRET: str = _optional("ISW_QA_CLIENT_SECRET")
+ISW_VIRTUAL_ACCOUNT_URL: str = _build_virtual_account_url()
 
 # ── Token / OTP lifetimes ─────────────────────────────────────────────────────
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
