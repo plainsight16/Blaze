@@ -51,7 +51,7 @@ class _AccountScreenState extends State<AccountScreen> {
       backgroundColor: cs.surfaceContainer,
       body: CustomScrollView(
         slivers: [
-
+     
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
             sliver: SliverList(
@@ -140,7 +140,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 }
 
-// --- App Bar ------------------------------------------------------------------
+// ─── App Bar ──────────────────────────────────────────────────────────────────
 
 class _AccountAppBar extends StatelessWidget {
   @override
@@ -199,7 +199,7 @@ class _AccountAppBar extends StatelessWidget {
   }
 }
 
-// --- Profile Header -----------------------------------------------------------
+// ─── Profile Header ───────────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({required this.profile});
@@ -291,7 +291,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// --- Profile Status Card ------------------------------------------------------
+// ─── Profile Status Card ──────────────────────────────────────────────────────
 
 class _ProfileStatusCard extends StatelessWidget {
   const _ProfileStatusCard({required this.profile, required this.loading});
@@ -383,7 +383,7 @@ class _ProfileStatusCard extends StatelessWidget {
   }
 }
 
-// --- KYC Card -----------------------------------------------------------------
+// ─── KYC Card ─────────────────────────────────────────────────────────────────
 
 class _KycCard extends StatelessWidget {
   const _KycCard({required this.profile});
@@ -451,7 +451,7 @@ class _KycCard extends StatelessWidget {
   }
 }
 
-// --- Section Label ------------------------------------------------------------
+// ─── Section Label ────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
@@ -467,7 +467,7 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// --- Settings Group -----------------------------------------------------------
+// ─── Settings Group ───────────────────────────────────────────────────────────
 
 class _SettingsItemData {
   const _SettingsItemData({
@@ -593,7 +593,7 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
-// --- Logout Button ------------------------------------------------------------
+// ─── Logout Button ────────────────────────────────────────────────────────────
 
 class _LogoutButton extends StatelessWidget {
   const _LogoutButton();
@@ -654,7 +654,7 @@ class _LogoutButton extends StatelessWidget {
   }
 }
 
-// --- Version Label ------------------------------------------------------------
+// ─── Version Label ────────────────────────────────────────────────────────────
 
 class _VersionLabel extends StatelessWidget {
   @override

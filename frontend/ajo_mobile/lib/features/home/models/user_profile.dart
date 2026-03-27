@@ -5,7 +5,6 @@ class WalletInfo {
     this.accountName,
     this.accountNumber,
     this.bankName,
-    this.amount,
   });
 
   final String id;
@@ -13,7 +12,6 @@ class WalletInfo {
   final String? accountName;
   final String? accountNumber;
   final String? bankName;
-  final String? amount;
 
   factory WalletInfo.fromJson(Map<String, dynamic> json) {
     return WalletInfo(
@@ -22,7 +20,6 @@ class WalletInfo {
       accountName: json['account_name']?.toString(),
       accountNumber: json['account_number']?.toString(),
       bankName: json['bank_name']?.toString(),
-      amount: json['amount']?.toString(),
     );
   }
 }

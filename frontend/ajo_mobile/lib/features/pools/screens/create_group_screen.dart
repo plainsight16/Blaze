@@ -39,7 +39,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // -- App bar -------------------------------------------------
+            // ── App bar ─────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -60,7 +60,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               ),
             ),
 
-            // -- Form ----------------------------------------------------
+            // ── Form ────────────────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -134,7 +134,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 }
 
-// --- Amount field with ₦ prefix -----------------------------------------------
+// ─── Amount field with ₦ prefix ───────────────────────────────────────────────
 
 class _AmountField extends StatelessWidget {
   const _AmountField({required this.controller});
@@ -187,7 +187,7 @@ class _AmountField extends StatelessWidget {
   }
 }
 
-// --- Dropdown field -----------------------------------------------------------
+// ─── Dropdown field ───────────────────────────────────────────────────────────
 
 class _DropdownField extends StatelessWidget {
   const _DropdownField({
@@ -229,7 +229,7 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
-// --- Toggle card --------------------------------------------------------------
+// ─── Toggle card ──────────────────────────────────────────────────────────────
 
 class _ToggleCard extends StatelessWidget {
   const _ToggleCard({

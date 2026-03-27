@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/api/api_repositories.dart';
 import '../../../core/theme/theme.dart';
 import '../../pools/data/groups_http_api.dart';
+import '../../pools/joined_group_entry.dart';
 import '../../pools/screens/create_group_screen.dart';
 import '../../pools/screens/explore_groups_screen.dart';
 import '../models/user_profile.dart';
@@ -190,7 +191,16 @@ class _HomeContentState extends State<_HomeContent> {
                     ...widget.myGroups.map(
                       (g) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: _MyGroupCard(group: g),
+                        child: _MyGroupCard(
+                          group: g,
+                          onOpen: () => openJoinedGroupDetail(
+                            context,
+                            groupId: g.groupId,
+                            groupName: g.name,
+                            role: g.role,
+                            groupType: g.type,
+                          ),
+                        ),
                       ),
                     ),
                 ]),
@@ -203,7 +213,7 @@ class _HomeContentState extends State<_HomeContent> {
   }
 }
 
-// --- Kept Page ----------------------------------------------------------------
+// ─── Kept Page ────────────────────────────────────────────────────────────────
 
 class _KeptPage extends StatefulWidget {
   const _KeptPage({required this.storageKey, required this.child});
@@ -226,7 +236,7 @@ class _KeptPageState extends State<_KeptPage>
   }
 }
 
-// --- Glass App Bar ------------------------------------------------------------
+// ─── Glass App Bar ────────────────────────────────────────────────────────────
 
 class _GlassAppBar extends StatelessWidget {
   const _GlassAppBar({this.profile});
@@ -346,7 +356,7 @@ class _GlassAppBar extends StatelessWidget {
   }
 }
 
-// --- Shimmer Box --------------------------------------------------------------
+// ─── Shimmer Box ──────────────────────────────────────────────────────────────
 
 class _ShimmerBox extends StatefulWidget {
   const _ShimmerBox({
@@ -950,41 +960,47 @@ class _EmptyGroupsCard extends StatelessWidget {
 }
 
 class _MyGroupCard extends StatelessWidget {
-  const _MyGroupCard({required this.group});
+  const _MyGroupCard({required this.group, required this.onOpen});
   final MyMembership group;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
+    return Material(
+      color: cs.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onOpen,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.groups_rounded, color: cs.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(group.name, style: AppTypography.titleSm(cs.onSurface)),
-                Text(
-                  '${group.type.toUpperCase()} • ${group.role.toUpperCase()}',
-                  style: AppTypography.labelSm(cs.onSurfaceVariant),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.groups_rounded, color: cs.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(group.name, style: AppTypography.titleSm(cs.onSurface)),
+                    Text(
+                      '${group.type.toUpperCase()} • ${group.role.toUpperCase()}',
+                      style: AppTypography.labelSm(cs.onSurfaceVariant),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// --- Bottom Navigation --------------------------------------------------------
+// ─── Bottom Navigation ────────────────────────────────────────────────────────
 
 class _BottomNav extends StatelessWidget {
   const _BottomNav({

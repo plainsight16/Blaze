@@ -128,7 +128,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 }
 
-// --- App Bar ------------------------------------------------------------------
+// ─── App Bar ──────────────────────────────────────────────────────────────────
 
 class _WalletAppBar extends StatelessWidget {
   @override
@@ -183,7 +183,7 @@ class _WalletAppBar extends StatelessWidget {
   }
 }
 
-// --- Balance Card -------------------------------------------------------------
+// ─── Balance Card ─────────────────────────────────────────────────────────────
 
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({
@@ -234,7 +234,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            hasWallet ?  profile!.wallet!.amount ?? "₦0.00": 'Wallet Not Provisioned',
+            hasWallet ? 'Wallet Active' : 'Wallet Not Provisioned',
             style: AppTypography.displayMd(Colors.white),
           ),
           const SizedBox(height: 6),
@@ -379,7 +379,7 @@ class _TransferButton extends StatelessWidget {
   }
 }
 
-// --- Stats Row ----------------------------------------------------------------
+// ─── Stats Row ────────────────────────────────────────────────────────────────
 
 class _StatsRow extends StatelessWidget {
   @override
@@ -459,7 +459,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// --- Recent Transactions ------------------------------------------------------
+// ─── Recent Transactions ──────────────────────────────────────────────────────
 
 class _RecentTransactions extends StatelessWidget {
   final _transactions = const [
@@ -601,7 +601,7 @@ class _TransactionItem extends StatelessWidget {
   }
 }
 
-// --- Referral Banner ----------------------------------------------------------
+// ─── Referral Banner ──────────────────────────────────────────────────────────
 
 class _ReferralBanner extends StatelessWidget {
   @override
