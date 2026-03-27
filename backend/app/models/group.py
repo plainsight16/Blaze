@@ -23,7 +23,7 @@ class Group(Base):
     memberships:   Mapped[list["UserGroup"]]    = relationship("UserGroup",    back_populates="group", cascade="all, delete-orphan")
     requests:      Mapped[list["GroupRequest"]] = relationship("GroupRequest", back_populates="group", cascade="all, delete-orphan")
     wallet:        Mapped["Wallet | None"]      = relationship("Wallet", back_populates="group", uselist=False)
-
+    cycles:        Mapped[list["Cycle"]]        = relationship("Cycle", back_populates="group", cascade="all, delete-orphan")
 
 class UserGroup(Base):
     __tablename__ = "user_groups"
@@ -33,8 +33,13 @@ class UserGroup(Base):
     # "member" | "admin"
     role:      Mapped[str]      = mapped_column(String, nullable=False, default="member")
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_frozen: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    frozen_until_cycle_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("cycles.id", ondelete="SET NULL"), nullable=True
+    )
 
     group: Mapped["Group"] = relationship("Group", back_populates="memberships")
+    
 
 
 class GroupRequest(Base):
