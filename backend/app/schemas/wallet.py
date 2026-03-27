@@ -21,6 +21,7 @@ class WalletResponse(BaseModel):
     provider_reference: str | None
     account_name: str
     account_number: str | None
+    amount: float | None
     bank_name: str | None
     bank_code: str | None
     status: WalletStatus
