@@ -6,7 +6,7 @@ BankStatement — separated from KYC so that:
     column — no JSON traversal, no try/except, no malformed-data surprises.
 
 Column strategy
-───────────────
+---------------
 Aggregates that the application reasons about (average_balance, total_credit,
 total_debit) are proper typed columns.  The month-on-month rows are genuinely
 variable-length array data with no fixed cardinality, so they stay in JSONB —
@@ -31,14 +31,14 @@ class BankStatement(Base):
     user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
     kyc_id:  Mapped[str] = mapped_column(String, ForeignKey("kyc.id",   ondelete="CASCADE"), nullable=False, unique=True)
 
-    # ── Queryable aggregates (extracted from averageValue) ────────────────────
+    # -- Queryable aggregates (extracted from averageValue) --------------------
     # These are the values the application actually reasons about.
     # Storing them as real columns means: typed, indexable, no dict traversal.
     average_balance: Mapped[float] = mapped_column(Float, nullable=False)
     total_credit:    Mapped[float] = mapped_column(Float, nullable=False)
     total_debit:     Mapped[float] = mapped_column(Float, nullable=False)
 
-    # ── Raw archive ───────────────────────────────────────────────────────────
+    # -- Raw archive -----------------------------------------------------------
     # Month-on-month rows: variable-length, never queried by column — JSONB is
     # the right tool here.  Shape: [ { yearMonth, totalDebit, totalCredit,
     # debitCount, creditCount, averageBalance }, ... ]

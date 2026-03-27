@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_nav_bar.dart';
 
-// ─── State Enum ───────────────────────────────────────────────────────────────
+// --- State Enum ---------------------------------------------------------------
 
 enum JoinedGroupState { active, defaulting, payout }
 
-// ─── Entry Point ──────────────────────────────────────────────────────────────
+// --- Entry Point --------------------------------------------------------------
 
 class JoinedGroupDetailScreen extends StatelessWidget {
   const JoinedGroupDetailScreen({
@@ -26,7 +26,7 @@ class JoinedGroupDetailScreen extends StatelessWidget {
       bottomNavigationBar: const AjoNavBar(active: AjoTab.pools),
       body: CustomScrollView(
         slivers: [
-          // ── Shared App Bar ─────────────────────────────────────────────
+          // -- Shared App Bar ---------------------------------------------
           SliverAppBar(
             pinned: true,
             backgroundColor: cs.surface,
@@ -50,7 +50,7 @@ class JoinedGroupDetailScreen extends StatelessWidget {
             ],
           ),
 
-          // ── State-specific body ────────────────────────────────────────
+          // -- State-specific body ----------------------------------------
           SliverToBoxAdapter(
             child: switch (state) {
               JoinedGroupState.active => const _ActiveBody(),
@@ -115,7 +115,7 @@ class _ActiveBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header: label + title + avatar stack ──────────────────────
+          // -- Header: label + title + avatar stack ----------------------
           Text('ACTIVE SAVINGS GROUP',
               style: AppTypography.labelSm(cs.primary)),
           const SizedBox(height: 6),
@@ -134,11 +134,11 @@ class _ActiveBody extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // ── Cycle Progress Card ────────────────────────────────────────
+          // -- Cycle Progress Card ----------------------------------------
           _ActiveCycleCard(),
           const SizedBox(height: 16),
 
-          // ── Contribution + Next Payout ─────────────────────────────────
+          // -- Contribution + Next Payout ---------------------------------
           Row(
             children: [
               Expanded(
@@ -162,11 +162,11 @@ class _ActiveBody extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // ── CTA card ───────────────────────────────────────────────────
+          // -- CTA card ---------------------------------------------------
           _MakeContributionCta(),
           const SizedBox(height: 28),
 
-          // ── Member Status ──────────────────────────────────────────────
+          // -- Member Status ----------------------------------------------
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -195,7 +195,7 @@ class _ActiveBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // ── Pot Summary ────────────────────────────────────────────────
+          // -- Pot Summary ------------------------------------------------
           _PotSummaryCard(),
         ],
       ),
@@ -203,7 +203,7 @@ class _ActiveBody extends StatelessWidget {
   }
 }
 
-// ─── Active: Cycle Progress Card ──────────────────────────────────────────────
+// --- Active: Cycle Progress Card ----------------------------------------------
 
 class _ActiveCycleCard extends StatelessWidget {
   @override
@@ -265,7 +265,7 @@ class _ActiveCycleCard extends StatelessWidget {
   }
 }
 
-// ─── Active: Make Contribution CTA ────────────────────────────────────────────
+// --- Active: Make Contribution CTA --------------------------------------------
 
 class _MakeContributionCta extends StatelessWidget {
   @override
@@ -323,7 +323,7 @@ class _MakeContributionCta extends StatelessWidget {
   }
 }
 
-// ─── Active: Member Row ────────────────────────────────────────────────────────
+// --- Active: Member Row --------------------------------------------------------
 
 class _MemberData {
   const _MemberData({
@@ -453,7 +453,7 @@ class _ActiveMemberRow extends StatelessWidget {
   }
 }
 
-// ─── Active: Pot Summary Card ──────────────────────────────────────────────────
+// --- Active: Pot Summary Card --------------------------------------------------
 
 class _PotSummaryCard extends StatelessWidget {
   @override
@@ -530,23 +530,23 @@ class _DefaultingBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Urgent Banner ──────────────────────────────────────────────
+          // -- Urgent Banner ----------------------------------------------
           _UrgentBanner(),
           const SizedBox(height: 20),
 
-          // ── Group Info Card ────────────────────────────────────────────
+          // -- Group Info Card --------------------------------------------
           _DefaultingGroupCard(),
           const SizedBox(height: 20),
 
-          // ── Trust Score Impact ─────────────────────────────────────────
+          // -- Trust Score Impact -----------------------------------------
           _TrustScoreCard(),
           const SizedBox(height: 20),
 
-          // ── Next Payout ────────────────────────────────────────────────
+          // -- Next Payout ------------------------------------------------
           _NextPayoutCard(),
           const SizedBox(height: 28),
 
-          // ── Group Members ──────────────────────────────────────────────
+          // -- Group Members ----------------------------------------------
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -567,7 +567,7 @@ class _DefaultingBody extends StatelessWidget {
   }
 }
 
-// ─── Defaulting: Urgent Banner ────────────────────────────────────────────────
+// --- Defaulting: Urgent Banner ------------------------------------------------
 
 class _UrgentBanner extends StatelessWidget {
   @override
@@ -638,7 +638,7 @@ class _UrgentBanner extends StatelessWidget {
   }
 }
 
-// ─── Defaulting: Group Card ───────────────────────────────────────────────────
+// --- Defaulting: Group Card ---------------------------------------------------
 
 class _DefaultingGroupCard extends StatelessWidget {
   @override
@@ -787,7 +787,7 @@ class _DefaultingGroupCard extends StatelessWidget {
   }
 }
 
-// ─── Defaulting: Trust Score Card ─────────────────────────────────────────────
+// --- Defaulting: Trust Score Card ---------------------------------------------
 
 class _TrustScoreCard extends StatelessWidget {
   @override
@@ -864,7 +864,7 @@ class _TrustScoreCard extends StatelessWidget {
   }
 }
 
-// ─── Defaulting: Next Payout Card ─────────────────────────────────────────────
+// --- Defaulting: Next Payout Card ---------------------------------------------
 
 class _NextPayoutCard extends StatelessWidget {
   @override
@@ -913,7 +913,7 @@ class _NextPayoutCard extends StatelessWidget {
   }
 }
 
-// ─── Defaulting: Members List ──────────────────────────────────────────────────
+// --- Defaulting: Members List --------------------------------------------------
 
 class _DefaultingMembersList extends StatelessWidget {
   @override
@@ -1072,7 +1072,7 @@ class _PayoutBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── "It's Your Turn!" hero card ──────────────────────────────────
+        // -- "It's Your Turn!" hero card ----------------------------------
         _ItsYourTurnHero(),
 
         Padding(
@@ -1082,11 +1082,11 @@ class _PayoutBody extends StatelessWidget {
             children: [
               const SizedBox(height: 16),
 
-              // ── Payout Amount Card ───────────────────────────────────────
+              // -- Payout Amount Card ---------------------------------------
               _PayoutAmountCard(),
               const SizedBox(height: 24),
 
-              // ── Group name + Cycle Progress ──────────────────────────────
+              // -- Group name + Cycle Progress ------------------------------
               Text('Wealth Builders Ajo',
                   style: AppTypography.titleLg(cs.onSurface)
                       .copyWith(fontWeight: FontWeight.w800)),
@@ -1094,7 +1094,7 @@ class _PayoutBody extends StatelessWidget {
               _PayoutCycleCard(),
               const SizedBox(height: 12),
 
-              // ── Members + Frequency ──────────────────────────────────────
+              // -- Members + Frequency --------------------------------------
               Row(
                 children: [
                   Expanded(
@@ -1116,7 +1116,7 @@ class _PayoutBody extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // ── Contribution History ─────────────────────────────────────
+              // -- Contribution History -------------------------------------
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1133,7 +1133,7 @@ class _PayoutBody extends StatelessWidget {
               _ContributionHistoryList(),
               const SizedBox(height: 28),
 
-              // ── Withdraw Payout CTA ──────────────────────────────────────
+              // -- Withdraw Payout CTA --------------------------------------
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -1165,7 +1165,7 @@ class _PayoutBody extends StatelessWidget {
   }
 }
 
-// ─── Payout: Hero Card ─────────────────────────────────────────────────────────
+// --- Payout: Hero Card ---------------------------------------------------------
 
 class _ItsYourTurnHero extends StatelessWidget {
   @override
@@ -1210,7 +1210,7 @@ class _ItsYourTurnHero extends StatelessWidget {
   }
 }
 
-// ─── Payout: Amount Card ───────────────────────────────────────────────────────
+// --- Payout: Amount Card -------------------------------------------------------
 
 class _PayoutAmountCard extends StatelessWidget {
   @override
@@ -1323,7 +1323,7 @@ class _PayoutMetaTile extends StatelessWidget {
   }
 }
 
-// ─── Payout: Cycle Progress Card ──────────────────────────────────────────────
+// --- Payout: Cycle Progress Card ----------------------------------------------
 
 class _PayoutCycleCard extends StatelessWidget {
   @override
@@ -1385,7 +1385,7 @@ class _PayoutCycleCard extends StatelessWidget {
   }
 }
 
-// ─── Payout: Stat Card ─────────────────────────────────────────────────────────
+// --- Payout: Stat Card ---------------------------------------------------------
 
 class _PayoutStatCard extends StatelessWidget {
   const _PayoutStatCard({
@@ -1427,7 +1427,7 @@ class _PayoutStatCard extends StatelessWidget {
   }
 }
 
-// ─── Payout: Contribution History ─────────────────────────────────────────────
+// --- Payout: Contribution History ---------------------------------------------
 
 class _ContributionHistoryList extends StatelessWidget {
   @override
@@ -1539,7 +1539,7 @@ class _ContributionEntry {
   final bool isPaid;
 }
 
-// ─── Shared: Member Avatar Stack ──────────────────────────────────────────────
+// --- Shared: Member Avatar Stack ----------------------------------------------
 
 class _MemberAvatarStack extends StatelessWidget {
   const _MemberAvatarStack({required this.count});
@@ -1598,7 +1598,7 @@ class _MemberAvatarStack extends StatelessWidget {
   }
 }
 
-// ─── Shared: Stat Tile ────────────────────────────────────────────────────────
+// --- Shared: Stat Tile --------------------------------------------------------
 
 class _StatTile extends StatelessWidget {
   const _StatTile({

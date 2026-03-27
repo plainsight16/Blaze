@@ -16,7 +16,7 @@ import 'deposit_screen.dart';
 import '../../profile/screens/kyc_screen.dart';
 import 'wallet_screen.dart';
 
-// ─── Main Shell ───────────────────────────────────────────────────────────────
+// --- Main Shell ---------------------------------------------------------------
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ─── Home Content ─────────────────────────────────────────────────────────────
+// --- Home Content -------------------------------------------------------------
 
 class _HomeContent extends StatefulWidget {
   const _HomeContent();
@@ -168,7 +168,7 @@ class _HomeContentState extends State<_HomeContent> {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Mock-data driven pool list ───────────────────────────
+                  // -- Mock-data driven pool list ---------------------------
                   ...mockActivePools.map(
                     (pool) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -185,7 +185,7 @@ class _HomeContentState extends State<_HomeContent> {
   }
 }
 
-// ─── Kept Page ────────────────────────────────────────────────────────────────
+// --- Kept Page ----------------------------------------------------------------
 
 class _KeptPage extends StatefulWidget {
   const _KeptPage({required this.storageKey, required this.child});
@@ -208,7 +208,7 @@ class _KeptPageState extends State<_KeptPage>
   }
 }
 
-// ─── Glass App Bar ────────────────────────────────────────────────────────────
+// --- Glass App Bar ------------------------------------------------------------
 
 class _GlassAppBar extends StatelessWidget {
   @override
@@ -325,7 +325,7 @@ class _GlassAppBar extends StatelessWidget {
   }
 }
 
-// ─── Shimmer Box ──────────────────────────────────────────────────────────────
+// --- Shimmer Box --------------------------------------------------------------
 
 class _ShimmerBox extends StatefulWidget {
   const _ShimmerBox({
@@ -397,7 +397,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   }
 }
 
-// ─── Balance Card ─────────────────────────────────────────────────────────────
+// --- Balance Card -------------------------------------------------------------
 
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({this.loading = false});
@@ -642,7 +642,7 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-// ─── Profile Completion Card ──────────────────────────────────────────────────
+// --- Profile Completion Card --------------------------------------------------
 
 class _ProfileCompletionCard extends StatelessWidget {
   const _ProfileCompletionCard({this.loading = false});
@@ -787,7 +787,7 @@ class _ProfileCompletionCard extends StatelessWidget {
   }
 }
 
-// ─── Section Header ────────────────────────────────────────────────────────────
+// --- Section Header ------------------------------------------------------------
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, this.action});
@@ -808,7 +808,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─── Quick Actions Grid ────────────────────────────────────────────────────────
+// --- Quick Actions Grid --------------------------------------------------------
 
 class _QuickActionsGrid extends StatelessWidget {
   @override
@@ -894,7 +894,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// ─── Pool Card ────────────────────────────────────────────────────────────────
+// --- Pool Card ----------------------------------------------------------------
 
 class _PoolCard extends StatelessWidget {
   const _PoolCard({
@@ -936,7 +936,7 @@ class _PoolCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final ext = context.ajoTheme;
 
-    // ── Shimmer skeleton ──────────────────────────────────────────────────
+    // -- Shimmer skeleton --------------------------------------------------
     if (loading) {
       return Container(
         decoration: BoxDecoration(
@@ -997,7 +997,7 @@ class _PoolCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // ── Pool icon ─────────────────────────────────────────────────
+            // -- Pool icon -------------------------------------------------
             Container(
               width: 48,
               height: 48,
@@ -1010,7 +1010,7 @@ class _PoolCard extends StatelessWidget {
             ),
             const SizedBox(width: 14),
 
-            // ── Title / cycle / progress ──────────────────────────────────
+            // -- Title / cycle / progress ----------------------------------
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1065,7 +1065,7 @@ class _PoolCard extends StatelessWidget {
             ),
             const SizedBox(width: 14),
 
-            // ── Amount / date ─────────────────────────────────────────────
+            // -- Amount / date ---------------------------------------------
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -1090,7 +1090,7 @@ class _PoolCard extends StatelessWidget {
   }
 }
 
-// ─── State Badge ──────────────────────────────────────────────────────────────
+// --- State Badge --------------------------------------------------------------
 
 class _StateBadge extends StatelessWidget {
   const _StateBadge({
@@ -1133,7 +1133,7 @@ class _StateBadge extends StatelessWidget {
   }
 }
 
-// ─── State Style ──────────────────────────────────────────────────────────────
+// --- State Style --------------------------------------------------------------
 
 class _StateStyle {
   const _StateStyle({
@@ -1151,7 +1151,7 @@ class _StateStyle {
   final String badgeLabel;
 }
 
-// ─── Bottom Navigation ────────────────────────────────────────────────────────
+// --- Bottom Navigation --------------------------------------------------------
 
 class _BottomNav extends StatelessWidget {
   const _BottomNav({

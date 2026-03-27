@@ -114,7 +114,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -151,7 +151,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Search bar ──────────────────────────────────────────────
+            // -- Search bar ----------------------------------------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -177,7 +177,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Filter chips ────────────────────────────────────────────
+            // -- Filter chips --------------------------------------------
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 52,
@@ -216,7 +216,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
               ),
             ),
 
-            // ── Group cards ─────────────────────────────────────────────
+            // -- Group cards ---------------------------------------------
             if (_loading)
               const SliverToBoxAdapter(
                 child: Padding(
@@ -290,7 +290,7 @@ class _ExploreGroupsScreenState extends State<ExploreGroupsScreen> {
   }
 }
 
-// ─── Group card (public — reused in home screen "See All") ────────────────────
+// --- Group card (public — reused in home screen "See All") --------------------
 
 class GroupCard extends StatelessWidget {
   const GroupCard({

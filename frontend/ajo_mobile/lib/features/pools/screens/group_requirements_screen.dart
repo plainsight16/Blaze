@@ -36,7 +36,7 @@ class _GroupRequirementsScreenState extends State<GroupRequirementsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -71,7 +71,7 @@ class _GroupRequirementsScreenState extends State<GroupRequirementsScreen> {
               ),
             ),
 
-            // ── Step dots ─────────────────────────────────────────────
+            // -- Step dots ---------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
@@ -94,7 +94,7 @@ class _GroupRequirementsScreenState extends State<GroupRequirementsScreen> {
               ),
             ),
 
-            // ── Form ─────────────────────────────────────────────────
+            // -- Form -------------------------------------------------
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -164,7 +164,7 @@ class _GroupRequirementsScreenState extends State<GroupRequirementsScreen> {
   }
 }
 
-// ─── Trust score card ─────────────────────────────────────────────────────────
+// --- Trust score card ---------------------------------------------------------
 
 class _TrustScoreCard extends StatelessWidget {
   const _TrustScoreCard({required this.value, required this.onChanged});
@@ -238,7 +238,7 @@ class _TrustScoreCard extends StatelessWidget {
   }
 }
 
-// ─── Money prefix field ───────────────────────────────────────────────────────
+// --- Money prefix field -------------------------------------------------------
 
 class _MoneyField extends StatelessWidget {
   const _MoneyField({required this.controller, required this.prefix});
@@ -286,7 +286,7 @@ class _MoneyField extends StatelessWidget {
   }
 }
 
-// ─── Textarea ─────────────────────────────────────────────────────────────────
+// --- Textarea -----------------------------------------------------------------
 
 class _TextAreaField extends StatelessWidget {
   const _TextAreaField({required this.controller, required this.hint});
