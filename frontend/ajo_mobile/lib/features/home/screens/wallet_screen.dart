@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:ajo_mobile/features/profile/screens/notifications_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
@@ -21,7 +22,42 @@ class WalletScreen extends StatelessWidget {
       backgroundColor: cs.surfaceContainer,
       body: CustomScrollView(
         slivers: [
-          _WalletAppBar(),
+         SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Your Wallet',
+                        style: AppTypography.headlineSm(cs.onSurface),
+                      ),
+                    ),
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                      ),
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.notifications_outlined,
+                          color: cs.onSurface,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             sliver: SliverList(
@@ -70,7 +106,7 @@ class _WalletAppBar extends StatelessWidget {
                 Icon(Icons.menu_rounded, color: cs.onSurface, size: 24),
                 const SizedBox(width: 12),
                 Text(
-                  'Ajo',
+                  'Your Wallet',
                   style: AppTypography.titleLg(cs.primary),
                 ),
                 const Spacer(),

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
-import '../../../core/widgets/ajo_gradient_button.dart';
-import '../../../core/api/api_repositories.dart';
-import '../../../core/network/api_client.dart';
-import '../auth_validators.dart';
-import 'reset_password_otp_screen.dart';
+import 'login_screen.dart';
+
+// ─── Entry Point ──────────────────────────────────────────────────────────────
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,140 +13,244 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  bool _submitting = false;
+  final _controller = TextEditingController();
+  bool _submitted = false;
+  bool _sending = false;
+
+  Future<void> _sendOtp() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _sending = true);
+    // Simulate network call
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    setState(() {
+      _sending = false;
+      _submitted = true;
+    });
+  }
+
+  Future<void> _resend() async {
+    setState(() => _sending = true);
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    setState(() => _sending = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reset link resent.')),
+    );
+  }
+
+  void _backToLogin() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _requestReset() async {
-    FocusScope.of(context).unfocus();
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    setState(() => _submitting = true);
-    try {
-      final identifier = _identifierController.text.trim();
-      if (!identifier.contains('@')) {
-        throw ApiException('Only email password reset is supported yet.');
-      }
-
-      await authHttpApi.forgotPassword(email: identifier);
-
-      if (!mounted) return;
-      final mask = _maskedIdentifier(identifier);
-      await Navigator.push<void>(
-        context,
-        MaterialPageRoute<void>(
-          builder: (_) => ResetPasswordOtpScreen(
-            identifier: identifier,
-            contactMask: mask,
-          ),
-        ),
-      );
-    } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+  @override
+  Widget build(BuildContext context) {
+    return _submitted
+        ? _LinkSentPage(onBackToLogin: _backToLogin, onResend: _resend)
+        : _EmailEntryPage(
+            controller: _controller,
+            sending: _sending,
+            onSend: _sendOtp,
+            onBackToLogin: _backToLogin,
+          );
   }
+}
 
-  String _maskedIdentifier(String raw) {
-    if (raw.contains('@')) {
-      final parts = raw.split('@');
-      if (parts.length != 2 || parts[0].length < 2) return '••••@…';
-      final a = parts[0];
-      return '${a[0]}•••@${parts[1]}';
-    }
-    final digits = raw.replaceAll(RegExp(r'\\D'), '');
-    if (digits.length < 4) return '•••• ••42';
-    return '•••• ••${digits.substring(digits.length - 2)}';
-  }
+// ══════════════════════════════════════════════════════════════════════════════
+// STEP 1 — Email / Phone Entry
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _EmailEntryPage extends StatelessWidget {
+  const _EmailEntryPage({
+    required this.controller,
+    required this.sending,
+    required this.onSend,
+    required this.onBackToLogin,
+  });
+
+  final TextEditingController controller;
+  final bool sending;
+  final VoidCallback onSend;
+  final VoidCallback onBackToLogin;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: cs.surfaceContainer,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── App Bar ────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Navigator.maybePop(context),
                     icon: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: cs.onSurface),
+                        color: cs.onSurface, size: 20),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text(
-                        'Reset Password',
-                        style: AppTypography.titleLg(cs.onSurface),
-                      ),
+                      child: Text('Ajo',
+                          style: AppTypography.titleLg(cs.primary)),
                     ),
                   ),
                   const SizedBox(width: 48),
                 ],
               ),
             ),
+
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 32),
-                      Text(
-                        'Enter your email or phone number',
-                        style: AppTypography.headlineMd(cs.onSurface),
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Heading ──────────────────────────────────────────
+                    Text('Forgot Password',
+                        style: AppTypography.headlineLg(cs.onSurface)
+                            .copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Enter your registered email or phone number to receive '
+                      'a 6-digit verification code.',
+                      style: AppTypography.bodyLg(cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // ── Input Card ────────────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'We will send a 6-digit reset code.',
-                        style: AppTypography.bodyMd(cs.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 32),
-                      _FieldLabel('Email or Phone Number'),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _identifierController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your email or phone',
-                          prefixIcon: const Icon(
-                            Icons.alternate_email_rounded,
-                            size: 20,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Field label
+                          Text(
+                            'EMAIL OR PHONE NUMBER',
+                            style: AppTypography.labelSm(
+                                    cs.onSurfaceVariant)
+                                .copyWith(
+                                    letterSpacing: 0.8, fontSize: 11),
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: cs.outlineVariant),
+                          const SizedBox(height: 12),
+
+                          // Input row
+                          Row(
+                            children: [
+                              Icon(Icons.email_outlined,
+                                  color: cs.onSurfaceVariant, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: controller,
+                                  keyboardType: TextInputType.emailAddress,
+                                  style:
+                                      AppTypography.bodyLg(cs.onSurface),
+                                  decoration: InputDecoration(
+                                    hintText: 'hello@ajo.com',
+                                    hintStyle: AppTypography.bodyLg(
+                                        cs.onSurface
+                                            .withValues(alpha: 0.3)),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: AuthValidators.emailOrPhone,
+                          const SizedBox(height: 24),
+
+                          // Send OTP button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: sending ? null : onSend,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: cs.primary,
+                                foregroundColor: cs.onPrimary,
+                                disabledBackgroundColor:
+                                    cs.primary.withValues(alpha: 0.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: sending
+                                  ? SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        color: cs.onPrimary,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text('Send OTP',
+                                            style:
+                                                AppTypography.labelLg(
+                                                    cs.onPrimary)),
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                            Icons.arrow_forward_rounded,
+                                            size: 20),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Back to login
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: onBackToLogin,
+                              icon: Icon(Icons.chevron_left_rounded,
+                                  color: cs.onSurface, size: 18),
+                              label: Text('Back to Login',
+                                  style: AppTypography.labelMd(
+                                      cs.onSurface)),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 28),
-                      AjoGradientButton(
-                        label: 'Send Reset Code',
-                        suffixIcon: Icons.send_rounded,
-                        isLoading: _submitting,
-                        onPressed: _submitting ? null : _requestReset,
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // ── Footer ────────────────────────────────────────────
+                    Center(
+                      child: Text(
+                        'SECURE LEDGER SYSTEM V2.0',
+                        style: AppTypography.labelSm(
+                                cs.onSurfaceVariant)
+                            .copyWith(
+                                fontSize: 10, letterSpacing: 1.2),
                       ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -159,19 +261,198 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
-  final String text;
+// ══════════════════════════════════════════════════════════════════════════════
+// STEP 2 — Link Sent Confirmation
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _LinkSentPage extends StatelessWidget {
+  const _LinkSentPage({
+    required this.onBackToLogin,
+    required this.onResend,
+  });
+
+  final VoidCallback onBackToLogin;
+  final VoidCallback onResend;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Text(
-      text,
-      style: AppTypography.labelMd(cs.onSurfaceVariant).copyWith(
-        fontWeight: FontWeight.w600,
+
+    return Scaffold(
+      backgroundColor: cs.surfaceContainer,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── App Bar ──────────────────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: cs.onSurface, size: 20),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text('Security',
+                          style: AppTypography.titleLg(cs.onSurface)),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onBackToLogin,
+                    icon: Icon(Icons.close_rounded,
+                        color: cs.onSurfaceVariant, size: 22),
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                child: Column(
+                  children: [
+                    const Spacer(),
+
+                    // ── Success Icon ────────────────────────────────────
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: cs.primary.withValues(alpha: 0.08),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF27AE60),
+                          ),
+                          child: const Icon(Icons.check_rounded,
+                              color: Colors.black, size: 36),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // ── Title ───────────────────────────────────────────
+                    Text('Link Sent',
+                        style: AppTypography.headlineLg(cs.onSurface)
+                            .copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 14),
+                    Text(
+                      'A password reset link has been sent to your email. '
+                      'Please check your inbox and spam folder.',
+                      style: AppTypography.bodyLg(cs.onSurfaceVariant),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const Spacer(),
+
+                    // ── Back to Login button ────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: onBackToLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cs.primary,
+                          foregroundColor: cs.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text('Back to Login',
+                            style: AppTypography.labelLg(cs.onPrimary)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Resend ──────────────────────────────────────────
+                    Column(
+                      children: [
+                        Text("Didn't receive the email?",
+                            style: AppTypography.bodySm(
+                                cs.onSurfaceVariant)),
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: onResend,
+                          child: Text('Resend link',
+                              style: AppTypography.labelMd(cs.primary)
+                                  .copyWith(
+                                      fontWeight: FontWeight.w700)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // ── Need Help Card ──────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Need help?',
+                                    style: AppTypography.titleSm(
+                                        cs.onSurface)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Our support team is available 24/7 for '
+                                  'account security issues.',
+                                  style: AppTypography.bodySm(
+                                      cs.onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 12),
+                                GestureDetector(
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Text('Contact Support',
+                                          style: AppTypography.labelMd(
+                                              cs.primary)),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: cs.primary,
+                                          size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.surfaceContainerHigh,
+                            ),
+                            child: Icon(Icons.help_outline_rounded,
+                                color: cs.onSurfaceVariant, size: 24),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
