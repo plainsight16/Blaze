@@ -164,18 +164,16 @@ def create_group(
 
 
 def search_groups(query: str, db: Session) -> list[Group]:
-    """Case-insensitive substring search over active public groups."""
-    return (
-        db.query(Group)
-        .filter(
-            Group.is_active == True,  # noqa: E712
-            Group.type      == "public",
-            Group.name.ilike(f"%{query}%"),
-        )
-        .order_by(Group.name)
-        .limit(50)
-        .all()
+    """Case-insensitive substring search over active public groups.
+    Passing an empty string returns all public groups (up to 50).
+    """
+    q = db.query(Group).filter(
+        Group.is_active == True,
+        Group.type      == "public",
     )
+    if query.strip():
+        q = q.filter(Group.name.ilike(f"%{query}%"))
+    return q.order_by(Group.name).limit(50).all()
 
 
 def delete_group(actor: User, group_id: str, db: Session) -> None:

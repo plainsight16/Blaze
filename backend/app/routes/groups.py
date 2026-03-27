@@ -28,7 +28,7 @@ router = APIRouter()
 
 @router.get("", response_model=list[GroupSummaryResponse])
 def search_groups(
-    q:  str     = Query(..., min_length=1, description="Search term"),
+    q:  str     = Query("", description="Search term; omit or leave empty to list all public groups"),
     db: Session = Depends(get_db),
     _:  User    = Depends(get_current_user),
 ) -> list[GroupSummaryResponse]:
