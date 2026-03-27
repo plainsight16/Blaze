@@ -119,4 +119,3 @@ class ApiClient {
     return <String, dynamic>{'data': decoded};
   }
 }
-

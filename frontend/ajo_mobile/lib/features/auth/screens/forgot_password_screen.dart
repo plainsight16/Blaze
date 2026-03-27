@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
 import 'login_screen.dart';
 
-// ─── Entry Point ──────────────────────────────────────────────────────────────
+// --- Entry Point --------------------------------------------------------------
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -94,7 +94,7 @@ class _EmailEntryPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── App Bar ────────────────────────────────────────────────
+            // -- App Bar ------------------------------------------------
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -122,7 +122,7 @@ class _EmailEntryPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Heading ──────────────────────────────────────────
+                    // -- Heading ------------------------------------------
                     Text('Forgot Password',
                         style: AppTypography.headlineLg(cs.onSurface)
                             .copyWith(fontWeight: FontWeight.w800)),
@@ -134,7 +134,7 @@ class _EmailEntryPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 40),
 
-                    // ── Input Card ────────────────────────────────────────
+                    // -- Input Card ----------------------------------------
                     Container(
                       decoration: BoxDecoration(
                         color: cs.surfaceContainerLow,
@@ -240,7 +240,7 @@ class _EmailEntryPage extends StatelessWidget {
 
                     const SizedBox(height: 48),
 
-                    // ── Footer ────────────────────────────────────────────
+                    // -- Footer --------------------------------------------
                     Center(
                       child: Text(
                         'SECURE LEDGER SYSTEM V2.0',
@@ -283,7 +283,7 @@ class _LinkSentPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ──────────────────────────────────────────────────
+            // -- App Bar --------------------------------------------------
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -316,7 +316,7 @@ class _LinkSentPage extends StatelessWidget {
                   children: [
                     const Spacer(),
 
-                    // ── Success Icon ────────────────────────────────────
+                    // -- Success Icon ------------------------------------
                     Container(
                       width: 100,
                       height: 100,
@@ -339,7 +339,7 @@ class _LinkSentPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // ── Title ───────────────────────────────────────────
+                    // -- Title -------------------------------------------
                     Text('Link Sent',
                         style: AppTypography.headlineLg(cs.onSurface)
                             .copyWith(fontWeight: FontWeight.w800)),
@@ -353,7 +353,7 @@ class _LinkSentPage extends StatelessWidget {
 
                     const Spacer(),
 
-                    // ── Back to Login button ────────────────────────────
+                    // -- Back to Login button ----------------------------
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -372,7 +372,7 @@ class _LinkSentPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // ── Resend ──────────────────────────────────────────
+                    // -- Resend ------------------------------------------
                     Column(
                       children: [
                         Text("Didn't receive the email?",
@@ -390,7 +390,7 @@ class _LinkSentPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // ── Need Help Card ──────────────────────────────────
+                    // -- Need Help Card ----------------------------------
                     Container(
                       decoration: BoxDecoration(
                         color: cs.surfaceContainerLow,

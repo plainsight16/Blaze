@@ -203,7 +203,7 @@ class _HomeContentState extends State<_HomeContent> {
   }
 }
 
-// ─── Kept Page ────────────────────────────────────────────────────────────────
+// --- Kept Page ----------------------------------------------------------------
 
 class _KeptPage extends StatefulWidget {
   const _KeptPage({required this.storageKey, required this.child});
@@ -226,7 +226,7 @@ class _KeptPageState extends State<_KeptPage>
   }
 }
 
-// ─── Glass App Bar ────────────────────────────────────────────────────────────
+// --- Glass App Bar ------------------------------------------------------------
 
 class _GlassAppBar extends StatelessWidget {
   const _GlassAppBar({this.profile});
@@ -346,7 +346,7 @@ class _GlassAppBar extends StatelessWidget {
   }
 }
 
-// ─── Shimmer Box ──────────────────────────────────────────────────────────────
+// --- Shimmer Box --------------------------------------------------------------
 
 class _ShimmerBox extends StatefulWidget {
   const _ShimmerBox({
@@ -984,7 +984,7 @@ class _MyGroupCard extends StatelessWidget {
   }
 }
 
-// ─── Bottom Navigation ────────────────────────────────────────────────────────
+// --- Bottom Navigation --------------------------------------------------------
 
 class _BottomNav extends StatelessWidget {
   const _BottomNav({

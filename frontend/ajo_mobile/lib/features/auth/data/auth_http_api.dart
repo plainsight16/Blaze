@@ -115,4 +115,3 @@ class AuthHttpApi {
     client.session.clear();
   }
 }
-

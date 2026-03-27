@@ -47,7 +47,7 @@ class _TransactionPinScreenState extends State<TransactionPinScreen> {
   }
 }
 
-// ─── Confirm PIN Screen ───────────────────────────────────────────────────────
+// --- Confirm PIN Screen -------------------------------------------------------
 
 class _ConfirmPinScreen extends StatefulWidget {
   const _ConfirmPinScreen({
@@ -187,7 +187,7 @@ class _PinScaffoldState extends State<_PinScaffold>
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ────────────────────────────────────────────────
+            // -- App Bar ------------------------------------------------
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -221,7 +221,7 @@ class _PinScaffoldState extends State<_PinScaffold>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Shield icon (confirm step only) ──────────────────
+                  // -- Shield icon (confirm step only) ------------------
                   if (widget.showShieldIcon) ...[
                     Container(
                       width: 80,
@@ -237,7 +237,7 @@ class _PinScaffoldState extends State<_PinScaffold>
                   ] else
                     const SizedBox(height: 8),
 
-                  // ── Title + subtitle ──────────────────────────────────
+                  // -- Title + subtitle ----------------------------------
                   Text(
                     widget.title,
                     style: AppTypography.headlineSm(Colors.white)
@@ -252,7 +252,7 @@ class _PinScaffoldState extends State<_PinScaffold>
                   ),
                   const SizedBox(height: 32),
 
-                  // ── PIN dots ──────────────────────────────────────────
+                  // -- PIN dots ------------------------------------------
                   AnimatedBuilder(
                     animation: _shakeAnim,
                     builder: (context, child) {
@@ -293,7 +293,7 @@ class _PinScaffoldState extends State<_PinScaffold>
 
                   const Spacer(flex: 2),
 
-                  // ── Numpad ────────────────────────────────────────────
+                  // -- Numpad --------------------------------------------
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16),
@@ -305,7 +305,7 @@ class _PinScaffoldState extends State<_PinScaffold>
 
                   const SizedBox(height: 24),
 
-                  // ── CTA button ────────────────────────────────────────
+                  // -- CTA button ----------------------------------------
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 24),
@@ -363,7 +363,7 @@ class _PinScaffoldState extends State<_PinScaffold>
   }
 }
 
-// ── Custom Numpad ─────────────────────────────────────────────────────────────
+// -- Custom Numpad -------------------------------------------------------------
 
 class _Numpad extends StatelessWidget {
   const _Numpad({required this.onKey, required this.onDelete});

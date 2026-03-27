@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/theme.dart';
 
-// ─── Entry Point ──────────────────────────────────────────────────────────────
+// --- Entry Point --------------------------------------------------------------
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -74,7 +74,7 @@ class _DepositScreenState extends State<DepositScreen> {
       body: SafeArea(
         child: Column(
           children: [
-           
+
 
             Expanded(
               child: SingleChildScrollView(
@@ -82,7 +82,7 @@ class _DepositScreenState extends State<DepositScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Heading ──
+                    // -- Heading --
                     Text(
                       'TRANSACTION',
                       style: AppTypography.labelSm(cs.primary),
@@ -99,7 +99,7 @@ class _DepositScreenState extends State<DepositScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Amount Input Card ──
+                    // -- Amount Input Card --
                     _AmountInputCard(
                       controller: _amountController,
                       displayAmount: _displayAmount,
@@ -122,7 +122,7 @@ class _DepositScreenState extends State<DepositScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Quick Select ──
+                    // -- Quick Select --
                     Text(
                       'QUICK SELECT',
                       style: AppTypography.labelSm(cs.onSurfaceVariant),
@@ -144,11 +144,11 @@ class _DepositScreenState extends State<DepositScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── Daily Limit Info ──
+                    // -- Daily Limit Info --
                     _DailyLimitBanner(),
                     const SizedBox(height: 32),
 
-                    // ── Proceed Button ──
+                    // -- Proceed Button --
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -178,7 +178,7 @@ class _DepositScreenState extends State<DepositScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Security note ──
+                    // -- Security note --
                     Center(
                       child: Text(
                         'SECURE 256-BIT AES ENCRYPTION',
@@ -196,7 +196,7 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 }
 
-// ─── Amount Input Card ────────────────────────────────────────────────────────
+// --- Amount Input Card --------------------------------------------------------
 
 class _AmountInputCard extends StatelessWidget {
   const _AmountInputCard({
@@ -283,7 +283,7 @@ class _AmountInputCard extends StatelessWidget {
   }
 }
 
-// ─── Quick Select ─────────────────────────────────────────────────────────────
+// --- Quick Select -------------------------------------------------------------
 
 class _QuickOption {
   const _QuickOption({required this.label, required this.amount});
@@ -328,7 +328,7 @@ class _QuickSelectCard extends StatelessWidget {
   }
 }
 
-// ─── Daily Limit Banner ───────────────────────────────────────────────────────
+// --- Daily Limit Banner -------------------------------------------------------
 
 class _DailyLimitBanner extends StatelessWidget {
   @override
@@ -374,7 +374,7 @@ class _DailyLimitBanner extends StatelessWidget {
   }
 }
 
-// ─── Deposit Method Screen ────────────────────────────────────────────────────
+// --- Deposit Method Screen ----------------------------------------------------
 
 class DepositMethodScreen extends StatelessWidget {
   const DepositMethodScreen({super.key, required this.amount});
@@ -559,7 +559,7 @@ class _SecureTransactionBanner extends StatelessWidget {
   }
 }
 
-// ─── Deposit Success Screen ───────────────────────────────────────────────────
+// --- Deposit Success Screen ---------------------------------------------------
 
 class DepositSuccessScreen extends StatelessWidget {
   const DepositSuccessScreen({
@@ -614,7 +614,7 @@ class DepositSuccessScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
           children: [
-            // ── Success Icon ──
+            // -- Success Icon --
             const SizedBox(height: 20),
             Container(
               width: 100,
@@ -647,7 +647,7 @@ class DepositSuccessScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // ── Amount Card ──
+            // -- Amount Card --
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -670,7 +670,7 @@ class DepositSuccessScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Method & Status ──
+            // -- Method & Status --
             Row(
               children: [
                 Expanded(
@@ -688,7 +688,7 @@ class DepositSuccessScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ── Reference ──
+            // -- Reference --
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
@@ -723,7 +723,7 @@ class DepositSuccessScreen extends StatelessWidget {
             ),
             const Spacer(),
 
-            // ── Done Button ──
+            // -- Done Button --
             SizedBox(
               width: double.infinity,
               height: 56,
