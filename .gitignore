@@ -6,4 +6,3 @@ venv/
 requests.http
 CLAUDE.md
 AGENTS.md
-frontend/ajo_mobie/pubspec.lock
