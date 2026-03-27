@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../../../core/widgets/ajo_nav_bar.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../models/group_model.dart';
 
 class GroupDetailScreen extends StatelessWidget {
@@ -223,7 +225,27 @@ class GroupDetailScreen extends StatelessWidget {
             right: 20,
             child: AjoGradientButton(
               label: 'REQUEST TO JOIN GROUP',
-              onPressed: () {},
+              onPressed: () async {
+                final id = group.id;
+                if (id == null || id.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Group id missing.')),
+                  );
+                  return;
+                }
+                try {
+                  await groupsHttpApi.requestJoinGroup(groupId: id);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Join request sent.')),
+                  );
+                } on ApiException catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message)),
+                  );
+                }
+              },
             ),
           ),
         ],
