@@ -6,18 +6,34 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../../home/screens/home_screen.dart';
 import 'otp_screen.dart';
+import 'login_screen.dart';
 
 /// Handles both OTP success and failure states.
 /// [success] = true  → bottom-sheet overlay with glassmorphism background.
 /// [success] = false → centred error card.
 class OtpResultScreen extends StatelessWidget {
-  const OtpResultScreen({super.key, required this.success});
+  const OtpResultScreen({
+    super.key,
+    required this.success,
+    required this.email,
+    this.purpose = 'email_verification',
+    this.contactMask,
+  });
 
   final bool success;
+  final String email;
+  final String purpose;
+  final String? contactMask;
 
   @override
   Widget build(BuildContext context) =>
-      success ? const _SuccessScreen() : const _FailureScreen();
+    success
+        ? const _SuccessScreen()
+        : _FailureScreen(
+            email: email,
+            purpose: purpose,
+            contactMask: contactMask,
+          );
 }
 
 // --- Success ------------------------------------------------------------------
@@ -144,7 +160,7 @@ class _SuccessScreen extends StatelessWidget {
                     suffixIcon: Icons.arrow_forward_rounded,
                     onPressed: () => Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
                       (_) => false,
                     ),
                   ),
@@ -161,7 +177,15 @@ class _SuccessScreen extends StatelessWidget {
 // --- Failure ------------------------------------------------------------------
 
 class _FailureScreen extends StatelessWidget {
-  const _FailureScreen();
+  const _FailureScreen({
+    required this.email,
+    required this.purpose,
+    this.contactMask,
+  });
+
+  final String email;
+  final String purpose;
+  final String? contactMask;
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +271,11 @@ class _FailureScreen extends StatelessWidget {
                           onPressed: () => Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const OtpScreen(),
+                              builder: (_) => OtpScreen(
+                                email: email,
+                                purpose: purpose,
+                                contactMask: contactMask,
+                              ),
                             ),
                           ),
                         ),

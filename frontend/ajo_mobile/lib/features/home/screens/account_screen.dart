@@ -22,7 +22,7 @@ class AccountScreen extends StatelessWidget {
       backgroundColor: cs.surfaceContainer,
       body: CustomScrollView(
         slivers: [
-          _AccountAppBar(),
+     
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
             sliver: SliverList(

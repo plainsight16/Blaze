@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../auth_validators.dart';
-import '../data/mock_auth_api.dart';
 import 'otp_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -37,21 +38,31 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _submitting = true);
     try {
-      await mockAuthApi.signup(
-        fullName: _nameController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        password: _passwordController.text,
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      final (firstName, lastName) = _splitName(_nameController.text);
+      final username = _deriveUsername(email: email, fullName: _nameController.text);
+
+      await authHttpApi.signup(
+        email: email,
+        username: username,
+        firstName: firstName,
+        lastName: lastName,
+        password: password,
       );
       if (!mounted) return;
-      final hint = _maskedPhone(_phoneController.text);
       await Navigator.push<void>(
         context,
         MaterialPageRoute<void>(
-          builder: (_) => OtpScreen(contactMask: hint),
+          builder: (_) => OtpScreen(
+            email: email,
+            purpose: 'email_verification',
+            contactMask: _maskedEmail(email),
+          ),
         ),
       );
-    } on MockAuthException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
@@ -62,10 +73,32 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  String _maskedPhone(String raw) {
-    final digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 4) return '•••• ••42';
-    return '•••• ••${digits.substring(digits.length - 2)}';
+  (String firstName, String lastName) _splitName(String fullName) {
+    final t = fullName.trim();
+    if (t.isEmpty) return ('Ajo', 'User');
+    final parts = t.split(RegExp(r'\\s+')).where((p) => p.isNotEmpty).toList();
+    final first = parts.first;
+    final last = parts.length > 1 ? parts.last : 'User';
+    return (first, last);
+  }
+
+  String _deriveUsername({
+    required String email,
+    required String fullName,
+  }) {
+    final prefix = email.split('@').first;
+    final cleaned = prefix.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '');
+    if (cleaned.isNotEmpty) return cleaned;
+    final firstPart = fullName.trim().split(RegExp(r'\\s+')).where((p) => p.isNotEmpty).first;
+    return firstPart.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '').toLowerCase();
+  }
+
+  String _maskedEmail(String email) {
+    final parts = email.split('@');
+    if (parts.length != 2 || parts[0].length < 2) return '••••@…';
+    final a = parts[0];
+    final d = parts[1];
+    return '${a[0]}•••@$d';
   }
 
   @override
