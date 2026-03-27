@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 WalletStatus = Literal["not_started", "pending", "active", "failed"]
@@ -29,5 +29,22 @@ class WalletResponse(BaseModel):
     provisioned_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class FundWalletRequest(BaseModel):
+    amount: float = Field(..., gt=0, description="Amount to credit, must be positive")
+    reference: str = Field(..., min_length=1, max_length=100)
+    description: str | None = None
+
+class TransactionResponse(BaseModel):
+    id: str
+    wallet_id: str
+    type: str
+    amount: float
+    reference: str
+    description: str | None
+    status: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}

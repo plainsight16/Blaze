@@ -18,6 +18,13 @@ from app.schemas.groups import (
     MyMembershipResponse,
     UpdateMemberRoleRequest,
 )
+from app.schemas.wallet import WalletResponse, FundWalletRequest, TransactionResponse
+from app.services.wallet import (
+    get_wallet_by_group_id,
+    provision_group_wallet,
+    fund_wallet,
+    WalletProvisioningError,
+)
 from app.services import groups as svc
 from app.utils.dependencies import get_current_user, get_db
 
@@ -200,3 +207,64 @@ def invite_user(
 ) -> MessageResponse:
     svc.invite_user(current_user, group_id, data.email, data.username, db)
     return MessageResponse(message="Invite sent.")
+
+@router.get("/{group_id}", response_model=GroupResponse)
+def get_group(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> GroupResponse:
+    group = svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+    return GroupResponse.model_validate(group)
+
+
+@router.get("/{group_id}/wallet", response_model=WalletResponse)
+def get_group_wallet(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletResponse:
+    svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+
+    wallet = get_wallet_by_group_id(group_id, db)
+    if not wallet:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group wallet not found.")
+    return WalletResponse.model_validate(wallet)
+
+
+@router.post("/{group_id}/wallet/provision", response_model=WalletResponse)
+def provision_group_wallet_route(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> WalletResponse:
+    group = svc._get_group_or_404(group_id, db)
+    svc._require_admin(current_user.id, group_id, db)
+
+    try:
+        wallet = provision_group_wallet(db, group)
+    except WalletProvisioningError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    return WalletResponse.model_validate(wallet)
+
+
+@router.post("/{group_id}/wallet/fund", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+def fund_group_wallet(
+    group_id: str,
+    payload: FundWalletRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TransactionResponse:
+    svc._get_group_or_404(group_id, db)
+    svc._require_membership(current_user.id, group_id, db)
+
+    wallet = get_wallet_by_group_id(group_id, db)
+    if not wallet:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group wallet not found.")
+    try:
+        tx = fund_wallet(db, wallet, payload.amount, payload.reference, payload.description)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return TransactionResponse.model_validate(tx)

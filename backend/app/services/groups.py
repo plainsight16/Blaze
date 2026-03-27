@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.services.wallet import provision_group_wallet
 from app.models.bank_statement import BankStatement
 from app.models.group import Group, GroupRequest, UserGroup
 from app.models.kyc import KYC
@@ -149,17 +150,19 @@ def create_group(
         created_at  = datetime.now(timezone.utc),
     )
     db.add(group)
-    db.flush()  # get group.id before adding membership
+    db.flush()
 
-    # Owner is automatically an admin member
     db.add(UserGroup(
-        user_id   = owner.id,
-        group_id  = group.id,
-        role      = "admin",
-        joined_at = datetime.now(timezone.utc),
+        user_id     = owner.id,
+        group_id    = group.id,
+        role        = "admin",
+        joined_at   = datetime.now(timezone.utc),
     ))
     db.commit()
     db.refresh(group)
+
+    provision_group_wallet(db, group, raise_on_failure=False)
+
     return group
 
 
