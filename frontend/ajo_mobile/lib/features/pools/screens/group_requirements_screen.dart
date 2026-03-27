@@ -7,7 +7,18 @@ import '../widgets/pool_form_widgets.dart';
 import 'review_group_screen.dart';
 
 class GroupRequirementsScreen extends StatefulWidget {
-  const GroupRequirementsScreen({super.key});
+  const GroupRequirementsScreen({
+    super.key,
+    required this.groupName,
+    required this.monthlyCon,
+    required this.type,
+    required this.interval,
+  });
+
+  final String groupName;
+  final int monthlyCon;
+  final String type;
+  final String interval;
 
   @override
   State<GroupRequirementsScreen> createState() =>
@@ -147,7 +158,15 @@ class _GroupRequirementsScreenState extends State<GroupRequirementsScreen> {
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ReviewGroupScreen(
+                            groupName: widget.groupName,
+                            monthlyCon: widget.monthlyCon,
+                            type: widget.type,
+                            interval: widget.interval,
                             trustScore: _trustScore.toInt(),
+                            minIncome: int.tryParse(
+                                  _incomeCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                                ) ??
+                                0,
                             description: _descCtrl.text,
                           ),
                         ),

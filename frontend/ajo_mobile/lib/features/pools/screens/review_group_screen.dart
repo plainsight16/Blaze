@@ -1,19 +1,60 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/api/api_repositories.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/ajo_gradient_button.dart';
 import '../../../core/widgets/ajo_nav_bar.dart';
 import '../widgets/pool_form_widgets.dart';
 
-class ReviewGroupScreen extends StatelessWidget {
+class ReviewGroupScreen extends StatefulWidget {
   const ReviewGroupScreen({
     super.key,
+    required this.groupName,
+    required this.monthlyCon,
+    required this.type,
+    required this.interval,
     this.trustScore = 750,
+    this.minIncome = 0,
     this.description = '',
   });
 
+  final String groupName;
+  final int monthlyCon;
+  final String type;
+  final String interval;
   final int trustScore;
+  final int minIncome;
   final String description;
+
+  @override
+  State<ReviewGroupScreen> createState() => _ReviewGroupScreenState();
+}
+
+class _ReviewGroupScreenState extends State<ReviewGroupScreen> {
+  bool _submitting = false;
+
+  Future<void> _createGroup() async {
+    setState(() => _submitting = true);
+    try {
+      await groupsHttpApi.createGroup(
+        name: widget.groupName,
+        description: widget.description,
+        type: widget.type,
+        monthlyCon: widget.monthlyCon,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Group created successfully.')),
+      );
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +125,7 @@ class ReviewGroupScreen extends StatelessWidget {
                                           fontSize: 9, letterSpacing: 0.8),
                                 ),
                                 Text(
-                                  'Thrift Savings 2024',
+                                  widget.groupName,
                                   style: AppTypography.titleMd(cs.onSurface)
                                       .copyWith(fontWeight: FontWeight.w800),
                                 ),
@@ -111,7 +152,7 @@ class ReviewGroupScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '₦50,000',
+                                '₦${widget.monthlyCon}',
                                 style: AppTypography.titleMd(cs.primary)
                                     .copyWith(fontWeight: FontWeight.w800),
                               ),
@@ -131,7 +172,7 @@ class ReviewGroupScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Weekly',
+                                widget.interval,
                                 style: AppTypography.titleMd(cs.onSurface)
                                     .copyWith(fontWeight: FontWeight.w800),
                               ),
@@ -161,7 +202,7 @@ class ReviewGroupScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: Text(
-                                'PUBLIC',
+                                widget.type.toUpperCase(),
                                 style: AppTypography.labelSm(cs.onPrimary)
                                     .copyWith(
                                         fontWeight: FontWeight.w800,
@@ -182,7 +223,7 @@ class ReviewGroupScreen extends StatelessWidget {
                       children: [
                         _ReviewDataRow(
                           label: 'MIN. TRUST SCORE',
-                          value: '$trustScore+',
+                          value: '${widget.trustScore}+',
                           icon: Icons.verified_user_rounded,
                         ),
                       ],
@@ -192,7 +233,7 @@ class ReviewGroupScreen extends StatelessWidget {
                       children: [
                         _ReviewDataRow(
                           label: 'MIN. MONTHLY INCOME',
-                          value: '₦200,000',
+                          value: '₦${widget.minIncome}',
                           icon: Icons.payments_rounded,
                         ),
                       ],
@@ -212,13 +253,13 @@ class ReviewGroupScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          description.isEmpty
+                          widget.description.isEmpty
                               ? 'This group is designed for professionals '
                                   'looking to build a robust emergency fund '
                                   'through disciplined weekly contributions. '
                                   'The goal is to reach a total pool of '
                                   '₦1,000,000 per cycle.'
-                              : description,
+                              : widget.description,
                           style: AppTypography.bodyMd(cs.onSurface),
                         ),
                       ],
@@ -229,9 +270,8 @@ class ReviewGroupScreen extends StatelessWidget {
                     AjoGradientButton(
                       label: 'Create Group',
                       suffixIcon: Icons.rocket_launch_rounded,
-                      onPressed: () {
-                        Navigator.of(context).popUntil((r) => r.isFirst);
-                      },
+                      isLoading: _submitting,
+                      onPressed: _submitting ? null : _createGroup,
                     ),
                   ],
                 ),

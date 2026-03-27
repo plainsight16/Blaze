@@ -18,6 +18,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _amountCtrl = TextEditingController(text: '0.00');
   String _interval = 'Weekly';
   bool _isPublic = true;
+  bool _submitting = false;
 
   static const _intervals = ['Daily', 'Weekly', 'Bi-weekly', 'Monthly'];
 
@@ -102,11 +103,25 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     AjoGradientButton(
                       label: 'Next',
                       suffixIcon: Icons.chevron_right_rounded,
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const GroupRequirementsScreen(),
-                        ),
-                      ),
+                      isLoading: _submitting,
+                      onPressed: _submitting
+                          ? null
+                          : () {
+                              final amount = int.tryParse(
+                                    _amountCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                                  ) ??
+                                  0;
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => GroupRequirementsScreen(
+                                    groupName: _nameCtrl.text.trim(),
+                                    monthlyCon: amount,
+                                    type: _isPublic ? 'public' : 'private',
+                                    interval: _interval,
+                                  ),
+                                ),
+                              );
+                            },
                     ),
                   ],
                 ),
