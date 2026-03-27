@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../pools/screens/joined_group_details.dart';
 
-// ─── Pool Model ───────────────────────────────────────────────────────────────
+// --- Pool Model ---------------------------------------------------------------
 
 class PoolData {
   const PoolData({
@@ -49,10 +49,10 @@ class PoolData {
   final int memberCount;
 }
 
-// ─── Mock Pool List ───────────────────────────────────────────────────────────
+// --- Mock Pool List -----------------------------------------------------------
 
 const List<PoolData> mockActivePools = [
-  // ── State: Active (normal, on-track member) ───────────────────────────────
+  // -- State: Active (normal, on-track member) -------------------------------
   PoolData(
     id: 'pool_001',
     title: 'Wealth Builders Ajo',
@@ -66,7 +66,7 @@ const List<PoolData> mockActivePools = [
     memberCount: 12,
   ),
 
-  // ── State: Payout (it's your turn to collect) ─────────────────────────────
+  // -- State: Payout (it's your turn to collect) -----------------------------
   PoolData(
     id: 'pool_002',
     title: 'Christmas 2024 Fund',
@@ -80,7 +80,7 @@ const List<PoolData> mockActivePools = [
     memberCount: 12,
   ),
 
-  // ── State: Defaulting (missed payment) ────────────────────────────────────
+  // -- State: Defaulting (missed payment) ------------------------------------
   PoolData(
     id: 'pool_003',
     title: 'Housing Fund',

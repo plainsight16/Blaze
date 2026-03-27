@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, field_validator
 
 
-# ── Group ─────────────────────────────────────────────────────────────────────
+# -- Group ---------------------------------------------------------------------
 
 class GroupResponse(BaseModel):
     id:          uuid.UUID
@@ -29,7 +29,7 @@ class GroupSummaryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Membership ────────────────────────────────────────────────────────────────
+# -- Membership ----------------------------------------------------------------
 
 class MemberResponse(BaseModel):
     user_id:   uuid.UUID
@@ -47,7 +47,7 @@ class MyMembershipResponse(BaseModel):
     joined_at: datetime
 
 
-# ── Requests / Invites ────────────────────────────────────────────────────────
+# -- Requests / Invites --------------------------------------------------------
 
 class GroupRequestResponse(BaseModel):
     id:           uuid.UUID
@@ -69,7 +69,7 @@ class MyInviteResponse(BaseModel):
     created_at: datetime
 
 
-# ── Incoming payloads ─────────────────────────────────────────────────────────
+# -- Incoming payloads ---------------------------------------------------------
 
 class CreateGroupRequest(BaseModel):
     name:        str

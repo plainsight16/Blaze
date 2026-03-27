@@ -15,7 +15,7 @@ from app.config import ALLOWED_ORIGINS
 from app.database import Base, engine
 from app.routes import auth, groups, home, kyc, wallet, user
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# -- App -----------------------------------------------------------------------
 
 app = FastAPI(
     title       = "Auth API",
@@ -32,7 +32,7 @@ def ensure_schema() -> None:
     """
     Base.metadata.create_all(bind=engine)
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
+# -- CORS ----------------------------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers     = ["*"],
 )
 
-# ── Global exception handlers ─────────────────────────────────────────────────
+# -- Global exception handlers -------------------------------------------------
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -57,7 +57,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         content     = {"detail": "An unexpected error occurred. Please try again later."},
     )
 
-# ── Routers ───────────────────────────────────────────────────────────────────
+# -- Routers -------------------------------------------------------------------
 
 app.include_router(home.router,   prefix="",   tags=["Docs"])
 app.include_router(auth.router,   prefix="/auth",   tags=["Auth"])
@@ -67,7 +67,7 @@ app.include_router(groups.router, prefix="/groups", tags=["Groups"])
 app.include_router(user.router,   prefix="/user",   tags=["User"])
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# -- Health check --------------------------------------------------------------
 
 @app.get("/health", tags=["Health"], include_in_schema=False)
 def health() -> dict:

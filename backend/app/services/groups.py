@@ -25,7 +25,7 @@ from app.models.kyc import KYC
 from app.models.user import User
 
 
-# ── Private helpers ───────────────────────────────────────────────────────────
+# -- Private helpers -----------------------------------------------------------
 
 def _get_group_or_404(group_id: str, db: Session) -> Group:
     group = db.query(Group).filter(
@@ -126,7 +126,7 @@ def _add_member(user_id: str, group_id: str, db: Session) -> None:
     ))
 
 
-# ── Group CRUD ────────────────────────────────────────────────────────────────
+# -- Group CRUD ----------------------------------------------------------------
 
 def create_group(
     name:        str,
@@ -186,7 +186,7 @@ def delete_group(actor: User, group_id: str, db: Session) -> None:
     db.commit()
 
 
-# ── Membership ────────────────────────────────────────────────────────────────
+# -- Membership ----------------------------------------------------------------
 
 def list_my_groups(user: User, db: Session) -> list[dict]:
     rows = (
@@ -282,7 +282,7 @@ def leave_group(actor: User, group_id: str, db: Session) -> None:
     db.commit()
 
 
-# ── Join requests (user → group) ──────────────────────────────────────────────
+# -- Join requests (user → group) ----------------------------------------------
 
 def request_to_join(actor: User, group_id: str, db: Session) -> GroupRequest:
     group = _get_group_or_404(group_id, db)
@@ -381,7 +381,7 @@ def list_join_requests(actor: User, group_id: str, db: Session) -> list[dict]:
     ]
 
 
-# ── Invites (admin → user) ────────────────────────────────────────────────────
+# -- Invites (admin → user) ----------------------------------------------------
 
 def invite_user(
     actor:    User,

@@ -24,7 +24,7 @@ from app.utils.dependencies import get_current_user, get_db
 router = APIRouter()
 
 
-# ── Discovery ─────────────────────────────────────────────────────────────────
+# -- Discovery -----------------------------------------------------------------
 
 @router.get("", response_model=list[GroupSummaryResponse])
 def search_groups(
@@ -35,7 +35,7 @@ def search_groups(
     return svc.search_groups(q, db)
 
 
-# ── My groups & invites ───────────────────────────────────────────────────────
+# -- My groups & invites -------------------------------------------------------
 
 @router.get("/me", response_model=list[MyMembershipResponse])
 def my_groups(
@@ -73,7 +73,7 @@ def decline_invite(
     return MessageResponse(message="Invite declined.")
 
 
-# ── Group management ──────────────────────────────────────────────────────────
+# -- Group management ----------------------------------------------------------
 
 @router.post("", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
 def create_group(
@@ -102,7 +102,7 @@ def delete_group(
     return MessageResponse(message="Group deleted.")
 
 
-# ── Membership ────────────────────────────────────────────────────────────────
+# -- Membership ----------------------------------------------------------------
 
 @router.get("/{group_id}/members", response_model=list[MemberResponse])
 def list_members(
@@ -146,7 +146,7 @@ def update_role(
     return MessageResponse(message="Role updated.")
 
 
-# ── Join requests (user → group) ──────────────────────────────────────────────
+# -- Join requests (user → group) ----------------------------------------------
 
 @router.post("/{group_id}/request", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def request_to_join(
@@ -189,7 +189,7 @@ def reject_request(
     return MessageResponse(message="Request rejected.")
 
 
-# ── Invites (admin → user) ────────────────────────────────────────────────────
+# -- Invites (admin → user) ----------------------------------------------------
 
 @router.post("/{group_id}/invite", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def invite_user(

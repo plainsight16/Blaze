@@ -27,7 +27,7 @@ class _KycScreenState extends State<KycScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -49,7 +49,7 @@ class _KycScreenState extends State<KycScreen> {
               ),
             ),
 
-            // ── Content ─────────────────────────────────────────────────
+            // -- Content -------------------------------------------------
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -68,7 +68,7 @@ class _KycScreenState extends State<KycScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Bank Statements ──────────────────────────────
+                    // -- Bank Statements ------------------------------
                     _SectionHeader(
                       title: 'Bank Statements',
                       badge: _RequiredBadge(required: true),
@@ -89,7 +89,7 @@ class _KycScreenState extends State<KycScreen> {
                           ),
                     const SizedBox(height: 24),
 
-                    // ── Employment Record ────────────────────────────
+                    // -- Employment Record ----------------------------
                     _SectionHeader(
                       title: 'Employment Record',
                       badge: _RequiredBadge(required: false),
@@ -106,7 +106,7 @@ class _KycScreenState extends State<KycScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // ── Submit CTA ───────────────────────────────────
+                    // -- Submit CTA -----------------------------------
                     AjoGradientButton(
                       label: 'Submit for Review',
                       suffixIcon: Icons.send_rounded,
@@ -130,7 +130,7 @@ class _KycScreenState extends State<KycScreen> {
   }
 }
 
-// ─── Section header ───────────────────────────────────────────────────────────
+// --- Section header -----------------------------------------------------------
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, required this.badge});
@@ -180,7 +180,7 @@ class _RequiredBadge extends StatelessWidget {
   }
 }
 
-// ─── Dashed drop zone ─────────────────────────────────────────────────────────
+// --- Dashed drop zone ---------------------------------------------------------
 
 class _DropZone extends StatelessWidget {
   const _DropZone({
@@ -244,7 +244,7 @@ class _DropZone extends StatelessWidget {
   }
 }
 
-// ─── Uploaded file row ────────────────────────────────────────────────────────
+// --- Uploaded file row --------------------------------------------------------
 
 class _UploadedFile extends StatelessWidget {
   const _UploadedFile({required this.name, required this.onRemove});
@@ -285,7 +285,7 @@ class _UploadedFile extends StatelessWidget {
   }
 }
 
-// ─── Compact upload row ───────────────────────────────────────────────────────
+// --- Compact upload row -------------------------------------------------------
 
 class _CompactUploadRow extends StatelessWidget {
   const _CompactUploadRow({
@@ -364,7 +364,7 @@ class _CompactUploadRow extends StatelessWidget {
   }
 }
 
-// ─── Dashed border painter ────────────────────────────────────────────────────
+// --- Dashed border painter ----------------------------------------------------
 
 class _DashedBorderPainter extends CustomPainter {
   const _DashedBorderPainter({required this.color, required this.radius});

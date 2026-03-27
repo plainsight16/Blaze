@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
 
-// ─── Field label ──────────────────────────────────────────────────────────────
+// --- Field label --------------------------------------------------------------
 
 class PoolFieldLabel extends StatelessWidget {
   const PoolFieldLabel(this.text, {super.key});
@@ -15,7 +15,7 @@ class PoolFieldLabel extends StatelessWidget {
   }
 }
 
-// ─── Info banner ──────────────────────────────────────────────────────────────
+// --- Info banner --------------------------------------------------------------
 
 class PoolInfoBanner extends StatelessWidget {
   const PoolInfoBanner({super.key, required this.text});
@@ -45,7 +45,7 @@ class PoolInfoBanner extends StatelessWidget {
   }
 }
 
-// ─── Generic text field ───────────────────────────────────────────────────────
+// --- Generic text field -------------------------------------------------------
 
 class PoolTextField extends StatelessWidget {
   const PoolTextField({
@@ -80,7 +80,7 @@ class PoolTextField extends StatelessWidget {
   }
 }
 
-// ─── Section divider label ────────────────────────────────────────────────────
+// --- Section divider label ----------------------------------------------------
 
 class PoolSectionLabel extends StatelessWidget {
   const PoolSectionLabel(this.text, {super.key});
@@ -99,7 +99,7 @@ class PoolSectionLabel extends StatelessWidget {
   }
 }
 
-// ─── Review detail card ───────────────────────────────────────────────────────
+// --- Review detail card -------------------------------------------------------
 
 class ReviewCard extends StatelessWidget {
   const ReviewCard({super.key, required this.children});

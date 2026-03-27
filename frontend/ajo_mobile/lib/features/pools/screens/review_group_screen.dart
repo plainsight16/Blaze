@@ -25,7 +25,7 @@ class ReviewGroupScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
@@ -46,14 +46,14 @@ class ReviewGroupScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Content ─────────────────────────────────────────────────
+            // -- Content -------------------------------------------------
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── GROUP DETAILS ────────────────────────────────
+                    // -- GROUP DETAILS --------------------------------
                     const PoolSectionLabel('GROUP DETAILS'),
                     const SizedBox(height: 10),
 
@@ -174,7 +174,7 @@ class ReviewGroupScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── REQUIREMENTS ────────────────────────────────
+                    // -- REQUIREMENTS --------------------------------
                     const PoolSectionLabel('REQUIREMENTS'),
                     const SizedBox(height: 10),
 
@@ -199,7 +199,7 @@ class ReviewGroupScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── ABOUT ────────────────────────────────────────
+                    // -- ABOUT ----------------------------------------
                     const PoolSectionLabel('ABOUT THE GROUP'),
                     const SizedBox(height: 10),
 
@@ -225,7 +225,7 @@ class ReviewGroupScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── CTA ─────────────────────────────────────────
+                    // -- CTA -----------------------------------------
                     AjoGradientButton(
                       label: 'Create Group',
                       suffixIcon: Icons.rocket_launch_rounded,
@@ -244,7 +244,7 @@ class ReviewGroupScreen extends StatelessWidget {
   }
 }
 
-// ─── Review data row ──────────────────────────────────────────────────────────
+// --- Review data row ----------------------------------------------------------
 
 class _ReviewDataRow extends StatelessWidget {
   const _ReviewDataRow({

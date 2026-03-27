@@ -35,7 +35,7 @@ class _MessagesScreenState extends State<MessagesScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ─────────────────────────────────────────────────
+            // -- App bar -------------------------------------------------
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
@@ -65,11 +65,11 @@ class _MessagesScreenState extends State<MessagesScreen>
               ),
             ),
 
-            // ── Tab bar ─────────────────────────────────────────────────
+            // -- Tab bar -------------------------------------------------
             const SizedBox(height: 16),
             _AjoTabBar(controller: _tabs),
 
-            // ── Tab views ───────────────────────────────────────────────
+            // -- Tab views -----------------------------------------------
             Expanded(
               child: TabBarView(
                 controller: _tabs,
@@ -101,7 +101,7 @@ class _MessagesScreenState extends State<MessagesScreen>
   }
 }
 
-// ─── Custom tab bar ───────────────────────────────────────────────────────────
+// --- Custom tab bar -----------------------------------------------------------
 
 class _AjoTabBar extends StatelessWidget {
   const _AjoTabBar({required this.controller});
@@ -139,7 +139,7 @@ class _AjoTabBar extends StatelessWidget {
   }
 }
 
-// ─── Messages tab ─────────────────────────────────────────────────────────────
+// --- Messages tab -------------------------------------------------------------
 
 class _MessagesTab extends StatelessWidget {
   static const _threads = [
@@ -306,7 +306,7 @@ class _ThreadTile extends StatelessWidget {
   }
 }
 
-// ─── Support tab ──────────────────────────────────────────────────────────────
+// --- Support tab --------------------------------------------------------------
 
 class _SupportTab extends StatelessWidget {
   @override
