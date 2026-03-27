@@ -18,6 +18,10 @@ A fintech mobile application for collaborative savings groups (Ajo/Esusu). Built
 - Phillip Owoeye (@sbg3k): Developer
 - Adeniji Ifeoluwatobi (@TobiAdeniji94): Developer
 
+## Live Docs
+
+- Swagger UI: https://blaze-tpja.onrender.com/docs
+
 ## Project Structure
 
 ```
