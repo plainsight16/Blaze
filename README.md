@@ -2,6 +2,11 @@
 
 A fintech mobile application for collaborative savings groups (Ajo/Esusu). Built for the Enyata x Interswitch Buildathon.
 
+## To the Judges
+Please login using these details
+- Email: "prize-daily-storm@duck.com"
+- Password: "string234"
+
 ## Tech Stack
 
 | Layer | Technology |
