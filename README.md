@@ -2,6 +2,17 @@
 
 A fintech mobile application for collaborative savings groups (Ajo/Esusu). Built for the Enyata x Interswitch Buildathon.
 
+## Our Vision
+To digitalise the processes of AJO inorder to increase accessibility and for all. We plan to acheive this while keeping it safe and fair.
+
+-  A platform to find suitable ajo groups that match a user's needs
+-  A platform that faciltates the collection of funds and its dispersal among user groups
+-  A strong KYC and onboarding process
+-  Protection of groups as each user as an eligibility score in order to join a group
+-  A Security Deposit percentage is taken off from each user to combat the risks of defaulting
+
+
+
 ## To the Judges
 
 1. Please login using these details
