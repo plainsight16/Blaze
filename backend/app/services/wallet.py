@@ -104,7 +104,7 @@ def provision_user_wallet(
 
 
 def get_wallet_by_group_id(group_id: str, db: Session) -> Wallet | None:
-    return db.query(Wallet).filter(Wallet.group_id == group_id).first()
+    return db.query(Wallet).filter(Wallet.group_id == group_id).with_for_update().one()
 
 
 def provision_group_wallet(
