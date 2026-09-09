@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models.cycle import Cycle, CycleSlot, CycleContribution, InsuranceWallet
 from app.models.group import Group, UserGroup
+from app.models.transaction import Transaction
 from app.models.wallet import Wallet
 from app.models.user import User
 from app.services.wallet import get_wallet_by_user_id, get_wallet_by_group_id, fund_wallet
@@ -51,8 +52,9 @@ def _get_insurance_wallet(cycle_id: str, user_id: str, db: Session) -> Insurance
     ).first()
 
 
-def _debit_wallet(wallet: Wallet, amount: float, db: Session) -> bool:
+def _debit_wallet(wallet_id: str, amount: float, db: Session) -> bool:
     """Attempt to debit a wallet. Returns True on success, False if insufficient funds."""
+    wallet = db.query(Wallet).filter(Wallet.id == wallet_id).with_for_update().one()
     if (wallet.amount or 0.0) < amount:
         return False
     wallet.amount = (wallet.amount or 0.0) - amount
@@ -139,7 +141,13 @@ def start_cycle(
 
 # -- Process due slot ----------------------------------------------------------
 
-def process_due_slot(db: Session, slot: CycleSlot) -> None:
+def process_due_slot(db: Session, slot_id: str) -> None:
+    slot = (
+        db.query(CycleSlot)
+        .filter(CycleSlot.id == slot_id)
+        .with_for_update()
+        .one()
+    )
     if slot.status != "pending":
         return
 
@@ -176,7 +184,7 @@ def process_due_slot(db: Session, slot: CycleSlot) -> None:
 
         member_wallet = get_wallet_by_user_id(membership.user_id, db)
 
-        if member_wallet and _debit_wallet(member_wallet, contribution_amount, db):
+        if member_wallet and _debit_wallet(member_wallet.id, contribution_amount, db):
             # Member wallet → group wallet
             group_wallet.amount = (group_wallet.amount or 0.0) + contribution_amount
             group_wallet.updated_at = now
@@ -323,9 +331,10 @@ def process_due_slot(db: Session, slot: CycleSlot) -> None:
 
     _check_cycle_completion(db, cycle)
 
-def _freeze_member(membership: UserGroup, cycle_id: str, db: Session) -> None:
-    membership.is_frozen = True
-    membership.frozen_until_cycle_id = cycle_id
+def _freeze_member(membership: UserGroup | None, cycle_id: str, db: Session) -> None:
+    if membership:
+        membership.is_frozen = True
+        membership.frozen_until_cycle_id = cycle_id
 
 
 def _check_cycle_completion(db: Session, cycle: Cycle) -> None:
@@ -410,7 +419,8 @@ def process_all_due_slots(db: Session) -> None:
     )
     for slot in due_slots:
         try:
-            process_due_slot(db, slot)
+            slot_id = slot.id
+            process_due_slot(db, slot_id)
         except Exception:
             # Log and continue — one bad slot shouldn't block others
             db.rollback()
